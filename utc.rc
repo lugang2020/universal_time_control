@@ -1,0 +1,4 @@
+#include "winuser.h"
+#include "resource.h"
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST utc.manifest
+MAINICON ICON "icon.ico"

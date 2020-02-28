@@ -1,0 +1,22 @@
+730,       // https://store.steampowered.com/app/730/CounterStrike_Global_Offensive/
+570,       // https://store.steampowered.com/app/570/Dota_2/
+578080,    // https://store.steampowered.com/app/578080/PLAYERUNKNOWNS_BATTLEGROUNDS/
+271590,    // https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/
+359550,    // https://store.steampowered.com/app/359550/Tom_Clancys_Rainbow_Six_Siege/
+1085660,   // https://store.steampowered.com/app/1085660/Destiny_2/
+440,       // https://store.steampowered.com/app/440/Team_Fortress_2/
+252950,    // https://store.steampowered.com/app/252950/Rocket_League/
+346110,    // https://store.steampowered.com/app/346110/ARK_Survival_Evolved/
+252490,    // https://store.steampowered.com/app/252490/Rust/
+381210,    // https://store.steampowered.com/app/381210/Dead_by_Daylight/
+238960,    // https://store.steampowered.com/app/238960/Path_of_Exile/
+39210,     // https://store.steampowered.com/app/39210/FINAL_FANTASY_XIV_Online/
+306130,    // https://store.steampowered.com/app/306130/The_Elder_Scrolls_Online/
+582660,    // https://store.steampowered.com/app/582660/Black_Desert_Online/
+386360,    // https://store.steampowered.com/app/386360/SMITE/
+444090,    // https://store.steampowered.com/app/444090/Paladins/
+236390,    // https://store.steampowered.com/app/236390/War_Thunder/
+107410,    // https://store.steampowered.com/app/107410/Arma_3/
+221100,    // https://store.steampowered.com/app/221100/DayZ/
+550,       // https://store.steampowered.com/app/550/Left_4_Dead_2/
+228980     // steamworks common redist

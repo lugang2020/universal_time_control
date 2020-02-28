@@ -1,0 +1,33 @@
+		// {
+		// 	int running_index; process_path_and_pid_t* running_exe;
+		// 	vec_foreach_ptr(&running, running_exe, running_index) {
+		// 		printf("%s\n", running_exe->path);
+		// 	}
+		// }
+
+
+		// {
+		// 	int enabled_index; process_path_t* enabled_exe;
+		// 	vec_foreach_ptr(&enabled, enabled_exe, enabled_index) {
+		// 		// printf("%s\n", enabled_exe->path);
+		// 	}
+		// }
+
+		
+
+		// {
+		// 	int managed_index; process_path_pid_and_handle_t* managed_exe;
+		// 	vec_foreach_ptr(&p->managed_processes, managed_exe, managed_index) {
+		// 		// printf("%s\n", enabled_and_running_exe->path);
+
+		// 		// 
+
+		// 	}
+		// }
+	{
+
+		int managed_index; process_path_pid_and_handle_t* managed_exe;
+		vec_foreach_ptr(&p->managed_processes, managed_exe, managed_index) {
+			printf("Managed: (PID %lu) %s\n", managed_exe->pid, managed_exe->path);
+		}
+	}

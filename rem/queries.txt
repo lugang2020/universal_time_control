@@ -1,0 +1,8 @@
+select
+	game.id,
+	case when game.steam_appid=-1 then 0 else 1 end as is_steam,
+	game.name,
+	game.allowed,
+	game.enabled,
+	game.profile_id
+from game;

@@ -1,0 +1,12 @@
+utc.res
+*.exe
+cimgui.dll
+*.sublime-workspace
+_obj_main/
+_obj_speedhack/
+_obj_ui_impl/
+_release/
+config.db
+ui_impl.dll
+data/payload_x32.dll
+data/payload_x64.dll
