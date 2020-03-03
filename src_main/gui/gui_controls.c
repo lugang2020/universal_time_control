@@ -11,57 +11,19 @@
 
 static const ImVec2 VEC2_ZERO = {0,0};
 
-// typedef struct {
-// 	int id;
-// 	int activation_mode; // 0=press, 1=hold, 2=toggle
-// 	key_t key;
-
-// 	int slow_or_fast; // 0 = slow, 1 = fast
-// 	int slowdown_or_speedup_percent;
-// 	int duration; // seconds
-
-// 	int limit_mode; // 0 = no limit, 1 = cooldown, 2 = energy
-
-// 	int cooldown_secs;
-
-// 	int max_energy;
-// 	int cost_per_use;
-// 	int recharge_rate;
-
-// 	bool is_toggled_on;
-// } gui_control_t;
-
-// void gui_control_init(control_t* c) {
-// 	c->activation_mode = 0;
-// 	// c->hot_key[0] = '\0';
-// 	// strcpy(c->hot_key, "CTRL+ALT+SHIFT+F12");
-
-// 	c->slow_or_fast = 0;
-// 	c->slowdown_or_speedup_percent = 60;
-// 	c->duration = 10;
-
-// 	c->limit_mode = 0;
-	
-// 	c->cooldown_secs = 5;
-
-// 	c->max_energy = 100;
-// 	c->cost_per_use = 25;
-// 	c->recharge_rate = 5;
-
-
-// }
-
 #define NUM_CONTROLS 3
 
 struct _gui_controls_data {
 	// gui_control_t controls[NUM_CONTROLS];
 	control_manager_t* cm;
+    int selected_id;
 };
 
 gui_controls_data_t* gui_controls_init(control_manager_t* cm) {
     MALLOC_TYPE(struct _gui_controls_data, data)
 
     data->cm = cm;
+    data->selected_id = 0;
 
     // for (int i = 0; i < NUM_CONTROLS; i++) {
     // 	gui_control_init(data->controls+i);
@@ -137,7 +99,7 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
     	igGetIO()->ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
     }
 
-    if (is_key_mode) {
+    if (is_key_mode && (data->selected_id == c->id)) {
     	igButton("Press key. ESC to clear", btn_size);
 
     	ImVec2 window_size = igGetWindowSize();
@@ -177,6 +139,7 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
 
     if (btn_pressed) {
     	gui_impl_enter_get_key_mode();
+        data->selected_id = c->id;
     }
 
     igPushStyleColorU32(ImGuiCol_Button, IM_COL32(210, 50, 50, 255));
@@ -277,13 +240,13 @@ void draw_limits_block(control_t* c, float block_width) {
 
     igPushItemWidth(block_width);
 
-    const char* options[] = {"No Limit", "Cooldown (WIP)", "Energy (WIP)"};
+    const char* options[] = {"No Limit", "Cooldown", "Energy"};
 
     if (igBeginCombo("###test4", options[c->limit_mode], 0)) {
 
     	for (int i = 0; i <= 2; i++) {
     		bool selected = (i == c->activation_mode);
-    		int flags = (i == 0) ? 0 : ImGuiSelectableFlags_Disabled;
+    		int flags = 0;//((i == 0)||(i == i)) ? 0 : ImGuiSelectableFlags_Disabled;
     		bool chosen = igSelectable(options[i], selected, flags, VEC2_ZERO);
     		if (chosen) {
     			c->limit_mode = i;
@@ -356,6 +319,26 @@ void draw_limits_block(control_t* c, float block_width) {
 			cap_int(&c->recharge_rate, 0, 999);
 			igPopItemWidth();	
 	    }
+
+
+        {
+            igAlignTextToFramePadding();
+            igText("Current:");
+            gui_util_same_line();
+
+
+            float text_diff = igCalcTextSize("Recharge per sec:", NULL, false, -0.0).x - igCalcTextSize("Current:", NULL, false, -0.0).x;
+
+            igPushItemWidth(max_x - igGetCursorPosX() - text_diff);
+            // igIndent(igGetCursorPosX());
+            igSetCursorPosX(igGetCursorPosX() + text_diff);
+            igText("%f", c->current_energy_level);
+            // igText
+            // igInputInt("###current", &c->cost_per_use, 1, 5, 0);
+            // cap_int(&c->cost_per_use, 0, 999);
+            igPopItemWidth();   
+        }
+
 
     }
 
@@ -462,8 +445,9 @@ void draw_control(gui_controls_data_t* data, control_t* c) {
     ImVec2 p1 = igGetItemRectMax();
     p1.x = igGetContentRegionMax().x + 0.0f * gui_common_get_data()->dpi_scale;
 
+    int state = control_manager_duringcallback_get_control_state(data->cm, c);
 
-    if (control_manager_duringcallback_is_control_active(data->cm, c)) {
+    if (state != 0) {
     	ImVec2 _p0 = p0;
     	ImVec2 _p1 = p1;
 
@@ -472,7 +456,11 @@ void draw_control(gui_controls_data_t* data, control_t* c) {
     	// _p1.y += p1.y;
     	// _p1.x += 15;
 
-    	ImDrawList_AddRectFilled(igGetWindowDrawList(), _p0, _p1, IM_COL32(255,20,20,255), 4.0, ImDrawCornerFlags_Left);
+    	ImDrawList_AddRectFilled(igGetWindowDrawList(), _p0, _p1,
+            // IM_COL32(255,20,20,255),
+            (state == 2) ? IM_COL32(255,20,20,255) : IM_COL32(20,255,20,255)
+            ,
+        4.0, ImDrawCornerFlags_Left);
     }
 
 

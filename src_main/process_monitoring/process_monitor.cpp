@@ -204,6 +204,16 @@ static void _get_running_processes(vec_process_path_and_pid_t* out_vec) {
 		memset(process_name_utf8_lower, 0, sizeof(process_name_utf8_lower));
 		util_casefold_utf8(process_name_utf8, process_name_utf8_lower, MAX_PATH-1);
 
+		for (int i = 0; i < MAX_PATH; i++) {
+			if (process_name_utf8_lower[i] == '/') {
+				process_name_utf8_lower[i] = '\\';
+			}
+		}
+
+		if (strstr(process_name_utf8_lower, "mindustry") != 0) {
+			printf("RN: %s\n", process_name_utf8_lower);
+		}
+
 		process_path_and_pid_t info;
 		info.pid = entry.th32ProcessID;
 		info.is_represented_by_managed = false;
@@ -243,6 +253,19 @@ static void _load_enabled_from_db(process_monitor_t* p, vec_process_path_t* out_
 
 		char path_utf8_lower[MAX_PATH];
 		util_casefold_utf8(path, path_utf8_lower, MAX_PATH-1);
+
+		for (int i = 0; i < MAX_PATH; i++) {
+			if (path_utf8_lower[i] == '/') {
+				path_utf8_lower[i] = '\\';
+			}
+		}
+
+
+		if (strstr(path_utf8_lower, "mindustry") != 0) {
+			printf("DB: %s\n", path_utf8_lower);
+		}
+
+		
 
 		process_path_t _enabled;
 		strcpy(_enabled.path, (const char*)path_utf8_lower);
@@ -466,7 +489,7 @@ static int _process_monitor_thread(void* _p) {
 	CAST_PTR(process_monitor_t, p)
 
 	while (1) {
-		printf("process monitor thread loop\n");
+		// printf("process monitor thread loop\n");
 		if (_get_should_quit(p)) {
 			printf("pm thread should break\n");
 			break;

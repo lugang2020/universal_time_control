@@ -46,6 +46,8 @@ struct _control_manager {
 
 	std::mutex controls_changed_mutex;
 	std::condition_variable controls_changed;
+
+	int64_t last_time;
 };
 
 static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct, const key_t& key, int activation_mode) {
@@ -76,9 +78,13 @@ static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct,
 
 #include <chrono>
 static int64_t get_seconds_epoch() {
-	// todo use ms?
 	std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
+
+static int64_t get_ms_epoch() {
+	std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
 
 void control_manager_thread(control_manager_t* ct) {
 	// printf("%s\n", "control_manager_thread");
@@ -91,6 +97,12 @@ void control_manager_thread(control_manager_t* ct) {
 		// printf("%s\n", "control_manager_thread");
 		// locked
 		bool have_changed = false;
+		int64_t now = get_seconds_epoch();
+		int64_t now_ms = get_ms_epoch();
+		int64_t delta = now_ms - ct->last_time;
+		float delta_secs = ((float)delta)/1000.0f;
+		// printf("delta: %f\n", delta_secs);
+		// printf("delta: %i\n", (int) delta);
 		{
 			std::lock_guard<std::mutex> lock(ct->main_mutex);
 			if (ct->should_quit) return;
@@ -115,11 +127,17 @@ void control_manager_thread(control_manager_t* ct) {
 					auto matching_press_controls = find_controls_matching_key(ct, key_pressed, 0);
 
 					for (control_t* control : matching_press_controls) {
-						// todo: should allow?
 						if (control->press_within_duration) continue;
-						int64_t now = get_seconds_epoch();
+						if ((control->limit_mode==1) && control->is_in_cooldown) continue;
+						// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
+						if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
+
 						control->press_within_duration = true;
 						control->press_began = now;
+						if (control->limit_mode == 2) {
+							control->current_energy_level -= control->cost_per_use;
+							// control-
+						}
 						have_changed = true;
 
 						// control->is_toggled_on = !control->is_toggled_on;
@@ -129,19 +147,57 @@ void control_manager_thread(control_manager_t* ct) {
 				// printf("\n");
 			}
 
+			
 			for (const auto& control : ct->controls) {
-				if ((control.activation_mode == 0) && (control.press_within_duration)) {
-					int64_t now = get_seconds_epoch();
-					if ((now - control.press_began) >= control.duration) {
-						((control_t*)&control)->press_within_duration = false;
-						have_changed = true;
+				if (control.activation_mode == 0) {
+
+					if (control.press_within_duration) {
+						if ((now - control.press_began) >= control.duration) {
+							((control_t*)&control)->press_within_duration = false;
+
+							if (control.limit_mode==1) {
+								((control_t*)&control)->is_in_cooldown = true;
+								((control_t*)&control)->cooldown_began = now;
+							}
+
+							have_changed = true;
+						}
+					} else {
+
+						if ((control.limit_mode == 1)  && (control.is_in_cooldown)) {
+							if ((now - control.cooldown_began) >= control.cooldown_secs) {
+								((control_t*)&control)->is_in_cooldown = false;
+								have_changed = true;
+							}
+						}
+
 					}
-					
+
+
+					if (control.limit_mode == 2) {
+						bool was_at_max = (control.current_energy_level >= control.max_energy);
+						float to_add = ((float)control.recharge_rate)*delta_secs;
+						// printf("to add: %f", to_add);
+						((control_t*)&control)->current_energy_level += to_add;
+						if (control.current_energy_level > control.max_energy) {
+							((control_t*)&control)->current_energy_level = control.max_energy;
+						}
+						if (!was_at_max) {
+							have_changed = true;
+						}
+					}
+
+
+
+
 				} else if (control.activation_mode == 1) {
 					((control_t*)&control)->is_held = false;
 					have_changed = true;
 					// control.is_held = false;
 				}
+
+
+
 			}
 
 			for (const auto& key_down : keys_down) {
@@ -183,6 +239,7 @@ void control_manager_thread(control_manager_t* ct) {
 
 		// util_sleep_for_ms(125);
 
+		ct->last_time = now_ms;
 	}
 
 	
@@ -198,13 +255,20 @@ void control_manager_sleep(control_manager_t* c) {
 	);
 }
 
-static bool _is_control_active(control_manager_t* c, const control_t* cont) {
+// 0=nothing, 1=active, 2=unavailable
+static int _get_control_state(control_manager_t* c, const control_t* cont) {
 	if (cont->activation_mode == 0) { // press
-		return cont->press_within_duration;
+		if ((cont->limit_mode == 1) && (cont->is_in_cooldown)) {
+			return 2;
+		} else if ((cont->limit_mode == 2) && (!cont->press_within_duration) && (cont->current_energy_level < cont->cost_per_use)) {
+			return 2;
+		} else {
+			return cont->press_within_duration;
+		}
 	} else if (cont->activation_mode == 1) { // hold
-		return cont->is_held;
+		return cont->is_held ? 1 : 0;
 	} else if (cont->activation_mode == 2) { // toggle
-		return cont->is_toggled_on;
+		return cont->is_toggled_on ? 1 : 0;
 	} else {
 		return false;
 	}
@@ -226,7 +290,7 @@ float control_manager_calculate_timescale(control_manager_t* ct) {
 	float timescale = 1.0;
 
 	for (const control_t& control : ct->controls) {
-		if (!_is_control_active(ct, &control)) continue;
+		if (_get_control_state(ct, &control) != 1) continue;
 		timescale = _get_timescale_for_control(ct, &control);
 	}
 
@@ -294,6 +358,14 @@ static void load_control_from_db(sqlite3_stmt* get_from_db_stmt, control_t& cont
 	control.is_held = false;
 	control.press_within_duration = false;
 	control.press_began = 0;
+
+	control.is_in_cooldown = false;
+	control.cooldown_began = 0;
+
+	control.current_energy_level = control.max_energy;
+
+
+
 }
 
 // reads control.id
@@ -408,6 +480,7 @@ control_manager_t*   control_manager_create(db_owner_t* _db) {
 	c->db_owner = _db;
 	c->should_quit = false;
 	c->should_insert = false;
+	c->last_time = get_seconds_epoch();
 
 
 	sqlite3* db = db_owner_lock_and_get_db(_db);
@@ -531,8 +604,9 @@ void control_manager_foreach_control(control_manager_t* c, void(*cb)(void* conte
 }
 
 
-bool control_manager_duringcallback_is_control_active(control_manager_t* c, control_t* cont) {
+// 0=nothing, 1=active, 2=unavailable
+int control_manager_duringcallback_get_control_state(control_manager_t* c, control_t* cont) {
 	// std::lock_guard<std::mutex> guard(c->main_mutex);
-	return _is_control_active(c, cont);
+	return _get_control_state(c, cont);
 
 }

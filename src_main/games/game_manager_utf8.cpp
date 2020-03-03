@@ -18,21 +18,14 @@ static int const bad_appids[] = {
 #include "bad_appids.inc.cpp"
 };
 
-#include "../../third_party/mingw-std-threads/mingw.thread.h"
-#include "../../third_party/mingw-std-threads/mingw.mutex.h"
-#include "../../third_party/mingw-std-threads/mingw.condition_variable.h"
-#include <atomic>
+
+
 
 struct _game_manager {
 	// std::thread thread;
 	// std::mutex main_mutex;
 	// std::mutex update_and_delete_mutex;
 	db_owner_t* db_owner;
-	std::thread thread;
-	std::mutex mutex;
-	std::atomic<bool> is_importing;
-	std::atomic<bool> should_quit;
-	std::atomic<bool> should_import;
 
 	// std::vector<control_t> to_modify;
 	// std::vector<control_t> to_delete;
@@ -42,15 +35,6 @@ struct _game_manager {
 
 	// bool should_quit;
 };
-
-// 0: normal, 1: importing
-int                game_manager_get_state(game_manager_t* s) {
-	return s->is_importing ? 1 : 0;
-}
-
-void game_manager_set_should_import(game_manager_t* s) {
-	s->should_import = true;
-}
 
 static const char* GAME_UPSERT_QUERY = R"""(
 	insert into game (steam_appid, name, allowed, enabled, profile_id, date_touched)
@@ -189,46 +173,17 @@ static void insert_exe_to_db(sqlite3* db, int game_id, const char* path) {
 }
 
 
-static void _game_manager_thread(game_manager_t* s) {
-
-	while (1) {
-		util_sleep_for_ms(10*1000);
-		if (s->should_quit) {
-			break;
-		}
-
-		if (!s->should_import) continue;
-
-		s->is_importing = true;
-
-			game_manager_import_all(s);
-
-		s->is_importing = false;
-		s->should_import = false;
-
-		
-	}
-
-	
-}
-
-
 game_manager_t*   game_manager_create(db_owner_t* db) {
 	game_manager_t* s = new game_manager_t;
 	s->db_owner = db;
-	s->is_importing = false;
-	s->should_quit = false;
-	s->should_import = false;
-	s->thread = std::thread(_game_manager_thread, s);
 	return s;
 }
 void               game_manager_destroy(game_manager_t* s) {
-	s->should_quit = true;
-	s->thread.join();
 	delete s;
 }
 
-typedef tyti::vdf::object vdf_t;
+// typedef tyti::vdf::object vdf_t;
+typedef tyti::vdf::wobject vdf_t;
 
 // #include <filesystem>
 
@@ -328,28 +283,114 @@ static void _MyReadFile(const char* filename, char* ReadBuffer)
     CloseHandle(hFile);
 }
 
-static vdf_t _read_vdf(const std::string& vdf_path) {
+
+
+static void _MyReadFileWide(const wchar_t* filename, uint8_t* ReadBuffer, size_t buffer_len)
+  {
+
+  	printf("filename: %ls\n", filename);
+
+    HANDLE hFile; 
+    
+    hFile = CreateFileW(filename,
+                       GENERIC_READ,          // open for reading
+                       FILE_SHARE_READ,       // share for reading
+                       NULL,                  // default security
+                       OPEN_EXISTING,         // existing file only
+                       FILE_ATTRIBUTE_NORMAL, // normal file
+                       NULL);                 // no attr. template
+
+    if (hFile == INVALID_HANDLE_VALUE) 
+    { 
+    	printf("Invalid file handle: %s\n", filename);
+    	_DisplayError("CreateFileW");
+        return; 
+    }
+
+    printf("Created file handle OK\n");
+
+    DWORD  dwBytesRead = 0;
+    if (ReadFile(hFile, ReadBuffer, buffer_len-1, &dwBytesRead, NULL) == FALSE)
+    {
+    	_DisplayError("ReadFile");
+        CloseHandle(hFile);
+        return;
+    }
+
+    printf("readfile ok: %i\n", dwBytesRead);
+
+    if (dwBytesRead > 0 && dwBytesRead <= buffer_len-1)
+    {
+        ReadBuffer[dwBytesRead]='\0'; // NULL character
+    }
+    else if (dwBytesRead == 0)
+    {
+    	printf("Read 0 bytes: %s\n", filename);
+    	CloseHandle(hFile);
+    	return;
+    }
+
+    CloseHandle(hFile);
+
+    printf("contents: %ls", ReadBuffer);
+
+
+}
+
+
+// static vdf_t _read_vdf(const std::string& vdf_path) {
+// 	// printf("about to parse: %s\n", vdf_path.c_str());
+
+// 	// char short_path[]
+// 	// GetShortPathNameA
+
+	
+// 	char ReadBuffer[BUFFERSIZE] = {0};
+
+// 	// printf("Will attempt to read path: %s\n", vdf_path.c_str());
+// 	_MyReadFile(vdf_path.c_str(), ReadBuffer);
+// 	// printf("Read data:\n%s\n", ReadBuffer);
+// 	// printf("Read file OK\n");
+// 	// printf("Will try to parse\n");
+
+// 	auto str = std::string(ReadBuffer);
+// 	auto ss = std::stringstream(str);
+
+// 	auto obj = tyti::vdf::read(ss);
+// 	// printf("Parsed OK\n");
+// 	return obj;
+// }
+
+static vdf_t _read_vdf_v2(const std::wstring& vdf_path) {
 	// printf("about to parse: %s\n", vdf_path.c_str());
 
 	// char short_path[]
 	// GetShortPathNameA
 
 	
-	char ReadBuffer[BUFFERSIZE] = {0};
+	uint8_t ReadBuffer[BUFFERSIZE] = {0};
+	// wchar_t* ReadBuffer = (wchar_t*) _ReadBuffer;
 
-	// printf("Will attempt to read path: %s\n", vdf_path.c_str());
-	_MyReadFile(vdf_path.c_str(), ReadBuffer);
-	// printf("Read data:\n%s\n", ReadBuffer);
-	// printf("Read file OK\n");
-	// printf("Will try to parse\n");
+	printf("calling mrfw\n");
+	_MyReadFileWide(vdf_path.c_str(), ReadBuffer, BUFFERSIZE);
+	printf("called mrfw\n");
 
-	auto str = std::string(ReadBuffer);
-	auto ss = std::stringstream(str);
+	wchar_t* wide = (wchar_t*) ReadBuffer;
+
+
+	auto str = std::wstring(wide);
+	auto ss = std::wstringstream(str);
+
+	printf("made ss\n");
+	printf("test: %ls", str.c_str());
 
 	auto obj = tyti::vdf::read(ss);
+
+	printf("called read\n");
 	// printf("Parsed OK\n");
 	return obj;
 }
+
 
 typedef std::vector<std::string> strvec_t;
 
@@ -509,7 +550,7 @@ static bool _find_steamapps_path(char* out, size_t out_len) {
 
     RegCloseKey(key);
 
-    // printf("asdf: %c\n", out[len-2] );
+    printf("asdf: %c\n", out[len-2] );
     if ((out[len-2] != '/') && (out[len-2] != '\\')) {
         strcat(out, "/");
     }
@@ -519,53 +560,126 @@ static bool _find_steamapps_path(char* out, size_t out_len) {
     // printf("path:\n");
 
     return true;
+}
+
+#include <optional>
+
+static std::optional<std::wstring> _find_steamapps_path_v2() {
+
+    HKEY key;
+    LONG res = RegOpenKeyExW(HKEY_CURRENT_USER, L"SOFTWARE\\Valve\\Steam", 0, KEY_READ | KEY_WOW64_64KEY, &key);
+    if (res != ERROR_SUCCESS) {
+      printf("ERR1 Failed to find Steam path. Is Steam installed?\n");
+      return std::nullopt;
+    }
+
+    // memset(out, 0, out_len);
+    // DWORD len = out_len;
+
+    uint8_t data[2048];
+    DWORD len = sizeof(data);
+    memset(data, 0, len);
+
+    ULONG read_err = RegQueryValueExW(key, L"SteamPath", NULL, NULL, data, &len);
+    if (read_err != ERROR_SUCCESS) {
+        printf("ERR2 Failed to find Steam path. Is Steam installed?\n");
+        RegCloseKey(key);
+        return std::nullopt;
+    }
+
+    RegCloseKey(key);
+
+    wchar_t* data_wide = (wchar_t*) data;
+    int wide_char_count = (len/2)-1;
+
+    if ((data_wide[wide_char_count-1] != L'/') && (data_wide[wide_char_count-1] != L'\\')) {
+        wcscat(data_wide, L"/");
+    }
+
+    wcscat(data_wide, L"steamapps");
+
+    std::wstring result (data_wide);
+
+    // printf("steam path v2: len: %i: %ls\n", wide_char_count, data);
+
+    return result;
+
+    // RegCloseKey(key);
+
+    // printf("asdf: %c\n", out[len-2] );
+    // if ((out[len-2] != '/') && (out[len-2] != '\\')) {
+    //     strcat(out, "/");
+    // }
+
+    // strcat(out, "steamapps");
+
+    // // printf("path:\n");
+
+    // return true;
 
 
 }
 
+
 static void _get_installed_games(game_manager_t* s) { 
 
-    char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
+ //    char buffer[1024];
+ //    memset(buffer, 0, sizeof(buffer));
 
-	if(!_find_steamapps_path(buffer, 1024)) {
+	// if(!_find_steamapps_path(buffer, 1024)) {
+	// 	MessageBoxA(NULL, "Failed to find Steam path. Is Steam installed?", "Error", MB_OK);
+	// 	abort();
+	// }
+
+	auto steam_path = _find_steamapps_path_v2();
+
+	if (steam_path) {
+		printf("Found Steam path: %ls\n", steam_path->c_str());
+	} else {
 		MessageBoxA(NULL, "Failed to find Steam path. Is Steam installed?", "Error", MB_OK);
 		abort();
 	}
 
-	printf("Detected Steam path: %s\n", buffer);
 
-	std::string default_library_dir = buffer;
-	std::string libraryfolders_path = default_library_dir + "\\libraryfolders.vdf";
+
+	// if (test1.val)
+
+	// printf("Detected Steam path: %s\n", buffer);
+		
+
+	std::wstring default_library_dir = steam_path.value();
+	std::wstring libraryfolders_path = default_library_dir + L"\\libraryfolders.vdf";
 
 	// std::string default_library_dir = "C:\\Program Files (x86)\\Steam\\steamapps"; // todo 
 	// std::string libraryfolders_path = default_library_dir + "\\libraryfolders.vdf";
 	// std::string libraryfolders_path = "C:\\Code\\universal_time_control\\bad_libfolders.txt";
 
-	std::vector<std::string> libraries;
+	std::vector<std::wstring> libraries;
 	libraries.push_back(default_library_dir);
 
 	try {
-		auto libraryfolders_vdf = _read_vdf(libraryfolders_path);
+		// printf("trying to read libfolders");
+		auto libraryfolders_vdf = _read_vdf_v2(libraryfolders_path);
+		// printf("read libfolders OK");
 
-		for (auto elem : libraryfolders_vdf.attribs) {
-			const char* name = elem.first.c_str();
-			int maybe_number = parse_positive_int_or_minus1(name);
-			if (maybe_number == -1) continue;
+		// for (auto elem : libraryfolders_vdf.attribs) {
+		// 	const char* name = elem.first.c_str();
+		// 	int maybe_number = parse_positive_int_or_minus1(name);
+		// 	if (maybe_number == -1) continue;
 
-			// printf("Child %s: %s\n", name, elem.second.c_str());
-			libraries.push_back(elem.second + "\\steamapps");
-		}
+		// 	// printf("Child %s: %s\n", name, elem.second.c_str());
+		// 	libraries.push_back(elem.second + "\\steamapps");
+		// }
 
-		for (const auto& lib : libraries) {
-			printf("Library: %s\n", lib.c_str());
-		}
+		// for (const auto& lib : libraries) {
+		// 	printf("Library: %s\n", lib.c_str());
+		// }
 	} catch (const std::exception& e) {
 		printf("Error reading libraryfolders: %s\n", e.what());
 	}
 
-
-
+	return;
+/*
 	// std::vector<std::string> acfs;
 
 	int64_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -666,7 +780,7 @@ static void _get_installed_games(game_manager_t* s) {
 	// }
 
 	// console.log(all_exes);
-
+*/
 }
 
 

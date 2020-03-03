@@ -184,7 +184,7 @@
 
 void gui_entry_point_start_and_run_loop(db_owner_t* db, control_manager_t* cm, game_manager_t* games) {
 
-	gui_impl_init("Universal Time Control | ALPHA build");
+	gui_impl_init("Universal Time Control | BETA build");
 	gui_impl_set_clear_colour(36, 40, 47);
 
 	gui_common_get_data()->dpi_scale = gui_impl_get_scale();

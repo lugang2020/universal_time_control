@@ -179,7 +179,7 @@ static void draw_game(gui_games_list_data_t* data, game_t* game) {
         igSpacing();
         igText("This is necessary due to the potential for misuse. We apologise for any inconvenience.");
         igSpacing();
-        igButton("Hide blacklisted games", VEC2_ZERO);
+        // igButton("Hide blacklisted games", VEC2_ZERO);
 
         goto end_of_game_widgets;
     }
@@ -308,7 +308,13 @@ void gui_games_list_draw(gui_games_list_data_t* data) {
 
     igSpacing();
 
-    draw_games(data);
+    if (game_manager_get_state(data->games) == 1) {
+        igText("Importing, please wait...");
+    } else {
+        draw_games(data);
+    }
+
+
 
     igSpacing();
     igSpacing();
@@ -322,7 +328,8 @@ void gui_games_list_draw(gui_games_list_data_t* data) {
         // data->is_importing
         // gui_util_same_line();
         // igText("Please wait, this may take a moment...");
-        game_manager_import_all(data->games);
+        // game_manager_import_all(data->games);
+        game_manager_set_should_import(data->games);
     }
 }
 

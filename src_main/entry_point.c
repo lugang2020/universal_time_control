@@ -1,3 +1,5 @@
+#include "windows_include.h"
+
 #include <stdio.h>
 #include "db/db_owner.h"
 #include "gui/gui_entry_point.h"
@@ -8,9 +10,18 @@
 
 #include "../src_ui_impl/gui_impl_c.h"
 
+
+
 int main() {
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
+
+    HANDLE hMutexHandle = CreateMutexW(NULL, TRUE, L"universaltimecontrol.is_running");
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+    	MessageBoxA(NULL, "UTC is already running. (Check your system tray!)", "Error", MB_OK);
+        return 1;
+    }
 
 	db_owner_t* db = db_owner_init();
 	control_manager_t* cm = control_manager_create(db);
@@ -25,4 +36,7 @@ int main() {
 	process_monitor_destroy(process_monitor);
 	control_manager_destroy(cm);
 	db_owner_destroy(db);
+
+	ReleaseMutex(hMutexHandle);
+	CloseHandle(hMutexHandle);
 }

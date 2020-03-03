@@ -35,6 +35,13 @@ typedef struct {
 	bool is_held;
 	bool press_within_duration;
 	int64_t press_began;
+
+	bool is_in_cooldown;
+	int64_t cooldown_began;
+
+	// bool have_enough_energy;
+	float current_energy_level;
+
 } control_t;
 
 
@@ -48,7 +55,9 @@ void                 control_manager_foreach_control(control_manager_t* c, void(
 // Call these funcs ONLY during a control_manager_foreach_control cb
 void                 control_manager_que_control_modification(control_manager_t* c, control_t* cont);
 void                 control_manager_que_control_deletion(control_manager_t* c, control_t* cont);
-bool                 control_manager_duringcallback_is_control_active(control_manager_t* c, control_t* cont);
+
+// 0=nothing, 1=active, 2=unavailable
+int                 control_manager_duringcallback_get_control_state(control_manager_t* c, control_t* cont);
 
 void                 control_manager_que_control_insertion(control_manager_t* c);
 
