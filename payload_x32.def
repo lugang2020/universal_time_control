@@ -1,2 +1,4 @@
 EXPORTS
 DllMain=DllMain@12
+universal_time_control
+universal_time_control_get_hwnd

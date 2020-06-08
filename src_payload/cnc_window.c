@@ -11,6 +11,12 @@
 
 LRESULT WINAPI cnc_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+HWND g_hwnd = NULL;
+
+HWND universal_time_control_get_hwnd() {
+	return g_hwnd;
+}
+
 DWORD WINAPI cnc_threadproc(void* param) {
 	(void)param;
 
@@ -34,7 +40,9 @@ DWORD WINAPI cnc_threadproc(void* param) {
 		0, // h
 	NULL, NULL, wc.hInstance, NULL);
 
-	(void)hwnd;
+
+	g_hwnd = hwnd;
+	// (void)hwnd;
 	// Hide window
 	// ShowWindow(hwnd, SW_SHOWDEFAULT);
 	// UpdateWindow(hwnd);
@@ -69,10 +77,11 @@ static void _process_cmd(HWND hWnd, timecontrol_ipc_cmd_t* cmd) {
 	if (cmd->cmd_type == UTC_IPC_CMD_SET_TIMESCALE) {
 		speedhack_set_timescale(cmd->timeScale);
 	} else if (cmd->cmd_type == UTC_IPC_CMD_SHOULD_UNLOAD) {
-		speedhack_unload();
-		DestroyWindow(hWnd);
-		UnregisterClassW(CNC_WNDCLASS_NAME, GetModuleHandle(NULL));
-		FreeLibraryAndExitThread(g_hinstDLL, 0);
+		speedhack_set_timescale(1.0);
+		// speedhack_unload();
+		// DestroyWindow(hWnd);
+		// UnregisterClassW(CNC_WNDCLASS_NAME, GetModuleHandle(NULL));
+		// FreeLibraryAndExitThread(g_hinstDLL, 0);
 	}
 }
 

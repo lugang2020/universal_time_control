@@ -22,6 +22,20 @@ static bool _is_32bit(HANDLE process)
 
 bool inject_process(DWORD pid, HANDLE process, HWND* out_cnc_hwnd) {
 
+	{
+		wchar_t window_name[200];
+		swprintf(window_name, 200, L"%ls%lu", CNC_WNDNAME_PREFIX, pid);
+
+		printf("looking for class=%ls, wname=%ls\n", CNC_WNDCLASS_NAME, window_name);
+
+		HWND window = FindWindowW(CNC_WNDCLASS_NAME, window_name);
+		if (window) {
+			*out_cnc_hwnd = window;
+			return true;
+		}
+	}
+
+
 	wchar_t exe_path[MAX_PATH];
 	GetModuleFileNameW(NULL, exe_path, MAX_PATH);
 	wchar_t* last_slash = wcsrchr(exe_path, L'\\');
@@ -70,21 +84,24 @@ bool inject_process(DWORD pid, HANDLE process, HWND* out_cnc_hwnd) {
 
 	Sleep(1500);
 
+	{
+		wchar_t window_name[200];
+		swprintf(window_name, 200, L"%ls%lu", CNC_WNDNAME_PREFIX, pid);
 
-	wchar_t window_name[200];
-	swprintf(window_name, 200, L"%ls%lu", CNC_WNDNAME_PREFIX, pid);
+		printf("looking for class=%ls, wname=%ls\n", CNC_WNDCLASS_NAME, window_name);
 
-	printf("looking for class=%ls, wname=%ls\n", CNC_WNDCLASS_NAME, window_name);
+		HWND window = FindWindowW(CNC_WNDCLASS_NAME, window_name);
+		if (!window) {
+			MessageBoxA(NULL, "Failed to take control of game. Please try again.", "Error", MB_OK);
+			// abort();
+			return false;
+		}
+		*out_cnc_hwnd = window;
 
-	// todo error handling
-	HWND window = FindWindowW(CNC_WNDCLASS_NAME, window_name);
-	if (!window) {
-		MessageBoxA(NULL, "Failed to take control of game. Please try again.", "Error", MB_OK);
-		// abort();
-		return false;
+
+		return true;
 	}
-	*out_cnc_hwnd = window;
-	return true;
+
 
 
 }

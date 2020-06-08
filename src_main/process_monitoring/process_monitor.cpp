@@ -406,7 +406,7 @@ static void _start_managing_new_processes(
 			strcpy(to_add.path, enabled_and_running_exe->path);
 
 			// todo: use fewer permissions if possible?
-			HANDLE temp = OpenProcess(PROCESS_ALL_ACCESS, FALSE, to_add.pid);
+			HANDLE temp = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, to_add.pid);
 			if (!temp) continue;
 
 			HWND cnc_window;

@@ -37,3 +37,7 @@ BOOL WINAPI DllMain(
 
 	return TRUE;
 }
+
+void universal_time_control() {
+
+}
