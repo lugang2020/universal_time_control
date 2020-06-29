@@ -16,6 +16,7 @@
 
 #include <set>
 #include <vector>
+#include <string>
 
 namespace std {
   template <> struct less<control_t>
@@ -25,9 +26,30 @@ namespace std {
     	return a.id < b.id;
     }
   };
+
+  template <> struct hash<control_t>
+  {
+    size_t operator()(const control_t& a) const
+    {
+        // const std::string str =
+        //     std::string( reinterpret_cast<const std::string::value_type*>( &a ), sizeof(control_t) );
+        // return std::hash<std::string>()( str );
+        return a.id;
+    }
+  };
+
+  template <> struct equal_to<control_t>
+  {
+    bool operator()(const control_t& a, const control_t& b) const
+    {
+    	return a.id == b.id;
+    }
+  };
+
 }
 
 typedef std::set<control_t> set_of_controls;
+typedef std::unordered_set<control_t> unordered_set_of_controls;
 
 struct _control_manager {
 	std::thread thread;
@@ -77,13 +99,67 @@ static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct,
 }
 
 #include <chrono>
-static int64_t get_seconds_epoch() {
-	std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
+
 
 static int64_t get_ms_epoch() {
-	std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
+
+static int64_t get_seconds_epoch() {
+	return get_ms_epoch()/1000;
+}
+
+// void control_manager_thread_2_iterate(control_manager_t* ct, set_of_keys* keys_down, set_of_keys* keys_pressed) {
+// 	(void)ct;
+// 	(void)keys_down;
+// 	(void)keys_pressed;
+// }
+
+// void control_manager_thread_2(control_manager_t* ct) {
+// 	std::condition_variable* keys_cv = gui_impl_get_keys_cv();
+// 	std::mutex* keys_mutex = gui_impl_get_keys_mutex();
+
+// 	while(1)
+// 	{
+// 		bool have_changed = false;
+// 		int64_t now = get_seconds_epoch();
+// 		int64_t now_ms = get_ms_epoch();
+// 		int64_t delta = now_ms - ct->last_time;
+// 		float delta_secs = ((float)delta)/1000.0f;
+
+// 		{
+// 			std::lock_guard<std::mutex> lock(ct->main_mutex);
+// 			if (ct->should_quit) return;
+
+
+// 			set_of_keys keys_down;
+// 			set_of_keys keys_pressed;
+// 			gui_impl_get_keys_data(&keys_down, &keys_pressed);
+
+// 			control_manager_thread_2_iterate(ct, &keys_down, &keys_pressed);
+// 		}
+
+// 		if (have_changed) {
+// 			ct->controls_changed.notify_all();
+// 		}
+		
+// 		{
+// 			std::unique_lock<std::mutex> keys_lock(*keys_mutex);
+// 			keys_cv->wait_for(
+// 				keys_lock,
+// 				std::chrono::milliseconds(100)
+// 			);
+// 		}
+
+// 		ct->last_time = now_ms;
+// 	}
+
+	
+// }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 
 
 void control_manager_thread(control_manager_t* ct) {
@@ -245,6 +321,8 @@ void control_manager_thread(control_manager_t* ct) {
 	
 }
 
+#pragma GCC diagnostic pop
+
 void control_manager_sleep(control_manager_t* c) {
 	std::unique_lock<std::mutex> lock(c->controls_changed_mutex);
 
@@ -257,6 +335,7 @@ void control_manager_sleep(control_manager_t* c) {
 
 // 0=nothing, 1=active, 2=unavailable
 static int _get_control_state(control_manager_t* c, const control_t* cont) {
+	(void)c;
 	if (cont->activation_mode == 0) { // press
 		if ((cont->limit_mode == 1) && (cont->is_in_cooldown)) {
 			return 2;
@@ -276,6 +355,7 @@ static int _get_control_state(control_manager_t* c, const control_t* cont) {
 
 // assume the control is active- what's its timescale?
 static float _get_timescale_for_control(control_manager_t* c, const control_t* cont) {
+	(void)c;
 	// float mult = (cont->slow_or_fast == 1) ? 1.0 : -1.0;
 	float val = ((float)cont->slowdown_or_speedup_percent) / 100.0f;
 	if (cont->slow_or_fast == 1) {

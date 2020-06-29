@@ -5,7 +5,14 @@
 #include "../util.h"
 
 #include "../../third_party/sqlite/sqlite3.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+
 #include "../../third_party/vdf/vdf_parser.hpp"
+
+#pragma GCC diagnostic pop
 
 // #include "../../third_party/mingw-std-threads/mingw.thread.h"
 // #include "../../third_party/mingw-std-threads/mingw.mutex.h"
@@ -265,10 +272,10 @@ static void _DisplayError(const char* lpszFunction)
     
     if (FAILED( sprintf((LPTSTR)lpDisplayBuf, 
                      // LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-                     TEXT("%s failed with error code %d as follows:\n%s"), 
+                     TEXT("%s failed with error code %lu as follows:\n%s"), 
                      lpszFunction, 
                      dw, 
-                     lpMsgBuf)))
+                     (const char*)lpMsgBuf)))
     {
         printf("FATAL ERROR: Unable to output error code.\n");
     }
@@ -356,15 +363,15 @@ typedef std::vector<std::string> strvec_t;
 // #include <Windows.h>
 
 
-static bool endsWith(const std::string& str, const std::string& suffix)
-{
-    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
-}
+// static bool endsWith(const std::string& str, const std::string& suffix)
+// {
+//     return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+// }
 
-static bool startsWith(const std::string& str, const std::string& prefix)
-{
-    return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
-}
+// static bool startsWith(const std::string& str, const std::string& prefix)
+// {
+//     return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
+// }
 
 static bool endsWith(const std::string& str, const char* suffix, unsigned suffixLen)
 {
@@ -381,10 +388,10 @@ static bool startsWith(const std::string& str, const char* prefix, unsigned pref
     return str.size() >= prefixLen && 0 == str.compare(0, prefixLen, prefix, prefixLen);
 }
 
-static bool startsWith(const std::string& str, const char* prefix)
-{
-    return startsWith(str, prefix, std::string::traits_type::length(prefix));
-}
+// static bool startsWith(const std::string& str, const char* prefix)
+// {
+//     return startsWith(str, prefix, std::string::traits_type::length(prefix));
+// }
 
 static strvec_t _find_exes(const std::string& base_path) {
 	strvec_t exes;

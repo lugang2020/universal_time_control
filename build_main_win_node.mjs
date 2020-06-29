@@ -15,11 +15,11 @@ async function build() {
 	bashSync(`windres --input utc.rc --output utc.res --output-format=coff`);
 
 	
-	//-Wl,-subsystem,windows
-	//utc.res \
+	// -Wl,-subsystem,windows
+	// utc.res \
 
-	let CC="gcc -Wall -Wextra -g";
-	let SEPPLES="g++ -Wall -Wextra -g --std=c++17"; // -fno-exceptions
+	let CC="gcc -Wall -Wextra";
+	let SEPPLES="g++ -Wall -Wextra --std=c++17 -fcompare-debug-second"; // -fno-exceptions
 
 	let DEFINES=""
 	let LIBS="-lui_impl -lsqlite3 -lWtsapi32 -lutf8proc"
@@ -36,7 +36,6 @@ async function build() {
 
 	SRC_FILES_C.push("third_party/tinycthread/tinycthread.c")
 	SRC_FILES_C.push("third_party/vec/vec.c")
-
 
 	SRC_FILES_C.push("src_main/task_que/task_que.c")
 	
@@ -56,7 +55,6 @@ async function build() {
 		SRC_FILES_C.push("src_main/gui/gui_games_list.c")
 		SRC_FILES_C.push("src_main/gui/gui_controls.c")
 	} else {
-		// CC="tcc -Wall -g -IC:/Code/winapi-full-for-0.9.27/include -IC:/Code/winapi-full-for-0.9.27/include/winapi"
 		DEFINES+=" -DLIVE_RELOAD"
 		LIBS+=" -ltcc -luser32"
 	}
@@ -70,15 +68,6 @@ async function build() {
 
 	bashSync(`rm -rf _obj_main`)
 	bashSync(`mkdir _obj_main`)
-
-	// let promises = [];
-
-	// for (let c_file of SRC_FILES_C) {
-	// 	promises.push(compile_c(c_file));
-	// }
-
-	// let object_files = await Promise.all(promises);
-	// console.log(object_files);
 
 	let to_run = [];
 	for (let c_file of SRC_FILES_C) {
@@ -102,10 +91,6 @@ async function build() {
 	bashSync(`${SEPPLES} utc.res ${DEFINES} -Wl,--stack,16777216 -otest_win.exe -m32 -Wfatal-errors -L. ${LIBS} ${object_files.join(" ")}`);
 
 	console.log("Build complete");
-	// bashSync("");
-
-	// bashSync(``);
-
 }
 
 build().catch(e=>{

@@ -102,14 +102,14 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
     if (is_key_mode && (data->selected_id == c->id)) {
     	igButton("Press key. ESC to clear", btn_size);
 
-    	ImVec2 window_size = igGetWindowSize();
-    	ImVec2 window_pos = igGetWindowPos();
+    	// ImVec2 window_size = igGetWindowSize();
+    	// ImVec2 window_pos = igGetWindowPos();
 
     	ImVec2 btn_min = igGetItemRectMin();
     	ImVec2 btn_max = igGetItemRectMax();
 
     	// ImVec2 top_rect_min = {-window_pos.x, -window_pos};
-    	ImVec2 top_rect_max = {window_size.x, btn_min.y};
+    	// ImVec2 top_rect_max = {window_size.x, btn_min.y};
 
     	ImDrawList_AddRect(igGetWindowDrawList(), btn_min, btn_max, IM_COL32(255,128,128,255), 4.0, ImDrawCornerFlags_All, 3.0f);
     	// ImDrawList_AddRectFilled(igGetWindowDrawList(), top_rect_min, top_rect_max, IM_COL32(128,128,255,255), 0, 0.0f);

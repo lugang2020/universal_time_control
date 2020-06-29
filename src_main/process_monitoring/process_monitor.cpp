@@ -483,6 +483,8 @@ static int _timescale_update_thread(void* _p) {
 
 		control_manager_sleep(p->cm);
 	}
+
+	return 0;
 }
 
 static int _process_monitor_thread(void* _p) {

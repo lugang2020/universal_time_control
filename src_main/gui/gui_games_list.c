@@ -137,12 +137,11 @@ gui_games_list_data_t* gui_games_list_init(db_owner_t* db_owner, game_manager_t*
 
 
 
-static const char* items[] = { "Default", "Test Profile 2" };
-
 
 
 
 static void draw_game(gui_games_list_data_t* data, game_t* game) {
+    (void)data;
 
 	gui_common_data_t* cd = gui_common_get_data();
 
@@ -201,35 +200,11 @@ static void draw_game(gui_games_list_data_t* data, game_t* game) {
     }
 
 
-	// igAlignTextToFramePadding();
- //    gui_util_text_with_font("Use profile:", cd->font_bold);
- //    gui_util_same_line();
- //    float pos_at_end_of_profile = igGetCursorPos().x;
 
- //    float combo_width = 300.0;
- //    float max_width = igGetWindowContentRegionWidth() - pos_at_end_of_profile - igGetStyle()->IndentSpacing;
- //    if (combo_width > max_width) combo_width = max_width;
- //    igSetNextItemWidth(combo_width);
-
- //    if (igBeginCombo("##combo", items[data->item_current], 0)) {
-
- //    	for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
- //    		bool sel = (i==data->item_current);
- //    		if (igSelectable(items[i], sel, 0, VEC2_ZERO)) {
- //    			data->item_current = i;
- //    		}
-
- //    		if (sel) {
- //    			igSetItemDefaultFocus();
- //    		}
- //    	}
-
- //    	igEndCombo();
- //    }
 
 end_of_game_widgets:
 
-    // igCombo("##combo", &data->item_current, items, IM_ARRAYSIZE(items), -1);
+
 
     igSpacing();
     igSpacing();
@@ -239,13 +214,6 @@ end_of_game_widgets:
 
     ImVec2 p1 = igGetItemRectMax();
 
-    // _IndentSpacing
-
-
-
-    // float indent_spacing = ;
-
-    // style.IndentSpacing
 
 
     p1.x += igGetStyle()->IndentSpacing;

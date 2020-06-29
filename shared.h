@@ -4,15 +4,19 @@
 #define CNC_WNDCLASS_NAME L"universaltimecontrol_cnc_wndcls"
 #define CNC_WNDNAME_PREFIX L"universaltimecontrol_cnc_wndforpid_"
 
+#include <stdbool.h>
+#include <stdint.h>
+#define PACKED __attribute__((packed))
+
+#if defined __cplusplus
+extern "C" {
+#endif
+
+
 typedef enum {
 	UTC_IPC_CMD_SHOULD_UNLOAD = 1,
 	UTC_IPC_CMD_SET_TIMESCALE = 2
 } timecontrol_ipc_cmd_type_t;
-
-#include <stdbool.h>
-#include <stdint.h>
-
-#define PACKED __attribute__((packed))
 
 typedef struct {
 	timecontrol_ipc_cmd_type_t cmd_type PACKED;
@@ -20,6 +24,11 @@ typedef struct {
 } PACKED timecontrol_ipc_cmd_t;
 
 typedef char str31[32];
+
+#if defined __cplusplus
+}
+#endif
+
 
 #undef PACKED
 #define PACKED
