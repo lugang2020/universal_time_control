@@ -60,7 +60,6 @@ int mtx_init_g(mtx_t *mtx, int type,char *name)
   mtx->mTimed = type & mtx_timed;
   if (!mtx->mTimed)
   {
-    printf("wtf!!!\n");
     InitializeCriticalSection(&(mtx->mHandle.cs));
   }
   else
