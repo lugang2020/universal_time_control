@@ -6,6 +6,8 @@
 
 #include "../../third_party/tinycthread/tinycthread.h"
 
+#include "../util.h"
+
 struct _db_owner {
 	sqlite3* sql;
 	mtx_t    mutex;
@@ -27,16 +29,17 @@ db_owner_t* db_owner_init() {
 
 	sqlite3_exec(d->sql, "PRAGMA foreign_keys = ON;", NULL, NULL, NULL);
 
-	mtx_init(&d->mutex, mtx_plain);
+	mtx_init_g(&d->mutex, mtx_timed,"db_global_lock");
 
 	return d;
 }
 
 void db_owner_destroy(db_owner_t* d) {
+	LOGI("E");
 	mtx_lock(&d->mutex);
 	sqlite3_free(d->sql);
 	mtx_unlock(&d->mutex);
-	mtx_destroy(&d->mutex);
+	//mtx_destroy(&d->mutex);
 	free(d);
 }
 

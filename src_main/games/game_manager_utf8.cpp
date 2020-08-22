@@ -192,42 +192,42 @@ typedef tyti::vdf::wobject vdf_t;
 
 #include <sstream>
 
-static void _DisplayError(const char* lpszFunction) 
+static void _DisplayError(const char* lpszFunction)
 // Routine Description:
 // Retrieve and output the system error message for the last-error code
-{ 
+{
     LPVOID lpMsgBuf;
     LPVOID lpDisplayBuf;
-    DWORD dw = GetLastError(); 
+    DWORD dw = GetLastError();
 
     FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) &lpMsgBuf,
-        0, 
+        0,
         NULL );
 
-    lpDisplayBuf = 
-        (LPVOID)LocalAlloc( LMEM_ZEROINIT, 
+    lpDisplayBuf =
+        (LPVOID)LocalAlloc( LMEM_ZEROINIT,
                             ( lstrlen((LPCTSTR)lpMsgBuf)
                               + lstrlen((LPCTSTR)lpszFunction)
                               + 40) // account for format string
                             * sizeof(TCHAR) );
-    
-    if (FAILED( sprintf((LPTSTR)lpDisplayBuf, 
+
+    if (FAILED( sprintf((LPTSTR)lpDisplayBuf,
                      // LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-                     TEXT("%s failed with error code %d as follows:\n%s"), 
-                     lpszFunction, 
-                     dw, 
+                     TEXT("%s failed with error code %d as follows:\n%s"),
+                     lpszFunction,
+                     dw,
                      lpMsgBuf)))
     {
         printf("FATAL ERROR: Unable to output error code.\n");
     }
-    
+
     printf(TEXT("ERROR: %s\n"), (LPCTSTR)lpDisplayBuf);
 
     LocalFree(lpMsgBuf);
@@ -238,9 +238,9 @@ static void _DisplayError(const char* lpszFunction)
 static void _MyReadFile(const char* filename, char* ReadBuffer)
   {
 
-    HANDLE hFile; 
-    
-    
+    HANDLE hFile;
+
+
 
 
 
@@ -252,11 +252,11 @@ static void _MyReadFile(const char* filename, char* ReadBuffer)
                        FILE_ATTRIBUTE_NORMAL, // normal file
                        NULL);                 // no attr. template
 
-    if (hFile == INVALID_HANDLE_VALUE) 
-    { 
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
     	printf("Invalid file handle: %s\n", filename);
     	_DisplayError("CreateFileA");
-        return; 
+        return;
     }
 
     // printf("Created file handle OK\n");
@@ -290,8 +290,8 @@ static void _MyReadFileWide(const wchar_t* filename, uint8_t* ReadBuffer, size_t
 
   	printf("filename: %ls\n", filename);
 
-    HANDLE hFile; 
-    
+    HANDLE hFile;
+
     hFile = CreateFileW(filename,
                        GENERIC_READ,          // open for reading
                        FILE_SHARE_READ,       // share for reading
@@ -300,11 +300,11 @@ static void _MyReadFileWide(const wchar_t* filename, uint8_t* ReadBuffer, size_t
                        FILE_ATTRIBUTE_NORMAL, // normal file
                        NULL);                 // no attr. template
 
-    if (hFile == INVALID_HANDLE_VALUE) 
-    { 
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
     	printf("Invalid file handle: %s\n", filename);
     	_DisplayError("CreateFileW");
-        return; 
+        return;
     }
 
     printf("Created file handle OK\n");
@@ -344,7 +344,7 @@ static void _MyReadFileWide(const wchar_t* filename, uint8_t* ReadBuffer, size_t
 // 	// char short_path[]
 // 	// GetShortPathNameA
 
-	
+
 // 	char ReadBuffer[BUFFERSIZE] = {0};
 
 // 	// printf("Will attempt to read path: %s\n", vdf_path.c_str());
@@ -367,7 +367,7 @@ static vdf_t _read_vdf_v2(const std::wstring& vdf_path) {
 	// char short_path[]
 	// GetShortPathNameA
 
-	
+
 	uint8_t ReadBuffer[BUFFERSIZE] = {0};
 	// wchar_t* ReadBuffer = (wchar_t*) _ReadBuffer;
 
@@ -498,7 +498,7 @@ static strvec_t _find_acfs(const std::string& base_path) {
 		// printf("found file: %s\n", data.cFileName);
 		if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			std::string name(data.cFileName);
-			
+
 			if (startsWith(name, "appmanifest_", 12) && endsWith(name, ".acf", 4)) {
 				printf("found file: %s\n", name.c_str());
 				acfs.push_back(base_path + "\\" + name);
@@ -650,7 +650,7 @@ static void _get_installed_games(game_manager_t* s) {
 	std::wstring default_library_dir = steam_path.value();
 	std::wstring libraryfolders_path = default_library_dir + L"\\libraryfolders.vdf";
 
-	// std::string default_library_dir = "C:\\Program Files (x86)\\Steam\\steamapps"; // todo 
+	// std::string default_library_dir = "C:\\Program Files (x86)\\Steam\\steamapps"; // todo
 	// std::string libraryfolders_path = default_library_dir + "\\libraryfolders.vdf";
 	// std::string libraryfolders_path = "C:\\Code\\universal_time_control\\bad_libfolders.txt";
 
@@ -793,6 +793,6 @@ static void _get_installed_games(game_manager_t* s) {
 
 
 
-void               game_manager_import_all(game_manager_t* s) {
+void   game_manager_import_all(game_manager_t* s) {
 	_get_installed_games(s);
 }

@@ -194,6 +194,8 @@ typedef struct {
 typedef pthread_mutex_t mtx_t;
 #endif
 
+int mtx_init_g(mtx_t *mtx, int type,char *name);
+
 /** Create a mutex object.
 * @param mtx A mutex object.
 * @param type Bit-mask that must have one of the following six values:

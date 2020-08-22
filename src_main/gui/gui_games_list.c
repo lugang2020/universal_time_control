@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../util.h"
+
 #include "../../third_party/sqlite/sqlite3.h"
 
 static const ImVec2 VEC2_ZERO = {0,0};

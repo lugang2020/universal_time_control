@@ -52,6 +52,34 @@ freely, subject to the following restrictions:
 extern "C" {
 #endif
 
+int mtx_init_g(mtx_t *mtx, int type,char *name)
+{
+#if defined(_TTHREAD_WIN32_)
+  mtx->mAlreadyLocked = FALSE;
+  mtx->mRecursive = type & mtx_recursive;
+  mtx->mTimed = type & mtx_timed;
+  if (!mtx->mTimed)
+  {
+    printf("wtf!!!\n");
+    InitializeCriticalSection(&(mtx->mHandle.cs));
+  }
+  else
+  {
+    mtx->mHandle.mut = CreateMutex(NULL, FALSE, name);
+    if (mtx->mHandle.mut == NULL)
+    {
+      return thrd_error;
+    }
+  }
+  return thrd_success;
+#else
+printf("Not implemented yet\n");
+#endif
+}
+
+
+
+
 
 int mtx_init(mtx_t *mtx, int type)
 {

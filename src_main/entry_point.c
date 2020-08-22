@@ -19,8 +19,8 @@ int main() {
     HANDLE hMutexHandle = CreateMutexW(NULL, TRUE, L"universaltimecontrol.is_running");
     if (GetLastError() == ERROR_ALREADY_EXISTS)
     {
-    	MessageBoxA(NULL, "UTC is already running. (Check your system tray!)", "Error", MB_OK);
-        return 1;
+    	//MessageBoxA(NULL, "UTC is already running. (Check your system tray!)", "Error", MB_OK);
+        //return 1;
     }
 
 	db_owner_t* db = db_owner_init();

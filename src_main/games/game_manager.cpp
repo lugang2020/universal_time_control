@@ -51,7 +51,7 @@ struct _game_manager {
 };
 
 // 0: normal, 1: importing
-int                game_manager_get_state(game_manager_t* s) {
+int  game_manager_get_state(game_manager_t* s) {
 	return s->is_importing ? 1 : 0;
 }
 
@@ -86,7 +86,7 @@ static int upsert_steam_game(sqlite3* db, int steam_appid, const char* name, boo
 
 		if (sqlite3_step(upsert_stmt) != SQLITE_DONE) {
 			const char* err = sqlite3_errmsg(db);
-			printf("sqlite upsert game err: %s\n", err);
+			LOGI("sqlite upsert game err: %s,abort", err);
 			abort();
 		}
 
@@ -101,14 +101,14 @@ static int upsert_steam_game(sqlite3* db, int steam_appid, const char* name, boo
 		int prepare_result = sqlite3_prepare_v2(db, "select id from game where steam_appid = ?", -1, &fetch_id_stmt, NULL);
 		if (prepare_result != SQLITE_OK) {
 			const char* err = sqlite3_errmsg(db);
-			printf("sqlite err2: %s\n", err);
+			LOGI("sqlite err2: %s\n", err);
 			abort();
 		}
 		sqlite3_bind_int(fetch_id_stmt, 1, steam_appid);
 
 		if (sqlite3_step(fetch_id_stmt) != SQLITE_ROW) {
 			const char* err = sqlite3_errmsg(db);
-			printf("sqlite upsert game refetch err: %s\n", err);
+			LOGI("sqlite upsert game refetch err: %s\n", err);
 			abort();
 		}
 
@@ -213,10 +213,10 @@ static void _game_manager_thread(game_manager_t* s) {
 		s->is_importing = false;
 		s->should_import = false;
 
-		
+
 	}
 
-	
+
 }
 
 
@@ -244,42 +244,42 @@ typedef tyti::vdf::object vdf_t;
 
 #include <sstream>
 
-static void _DisplayError(const char* lpszFunction) 
+static void _DisplayError(const char* lpszFunction)
 // Routine Description:
 // Retrieve and output the system error message for the last-error code
-{ 
+{
     LPVOID lpMsgBuf;
     LPVOID lpDisplayBuf;
-    DWORD dw = GetLastError(); 
+    DWORD dw = GetLastError();
 
     FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) &lpMsgBuf,
-        0, 
+        0,
         NULL );
 
-    lpDisplayBuf = 
-        (LPVOID)LocalAlloc( LMEM_ZEROINIT, 
+    lpDisplayBuf =
+        (LPVOID)LocalAlloc( LMEM_ZEROINIT,
                             ( lstrlen((LPCTSTR)lpMsgBuf)
                               + lstrlen((LPCTSTR)lpszFunction)
                               + 40) // account for format string
                             * sizeof(TCHAR) );
-    
-    if (FAILED( sprintf((LPTSTR)lpDisplayBuf, 
+
+    if (FAILED( sprintf((LPTSTR)lpDisplayBuf,
                      // LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-                     TEXT("%s failed with error code %lu as follows:\n%s"), 
-                     lpszFunction, 
-                     dw, 
+                     TEXT("%s failed with error code %lu as follows:\n%s"),
+                     lpszFunction,
+                     dw,
                      (const char*)lpMsgBuf)))
     {
         printf("FATAL ERROR: Unable to output error code.\n");
     }
-    
+
     printf(TEXT("ERROR: %s\n"), (LPCTSTR)lpDisplayBuf);
 
     LocalFree(lpMsgBuf);
@@ -290,9 +290,9 @@ static void _DisplayError(const char* lpszFunction)
 static void _MyReadFile(const char* filename, char* ReadBuffer)
   {
 
-    HANDLE hFile; 
-    
-    
+    HANDLE hFile;
+
+
 
 
 
@@ -304,11 +304,11 @@ static void _MyReadFile(const char* filename, char* ReadBuffer)
                        FILE_ATTRIBUTE_NORMAL, // normal file
                        NULL);                 // no attr. template
 
-    if (hFile == INVALID_HANDLE_VALUE) 
-    { 
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
     	printf("Invalid file handle: %s\n", filename);
     	_DisplayError("CreateFileA");
-        return; 
+        return;
     }
 
     // printf("Created file handle OK\n");
@@ -341,7 +341,7 @@ static vdf_t _read_vdf(const std::string& vdf_path) {
 	// char short_path[]
 	// GetShortPathNameA
 
-	
+
 	char ReadBuffer[BUFFERSIZE] = {0};
 
 	// printf("Will attempt to read path: %s\n", vdf_path.c_str());
@@ -464,7 +464,7 @@ static strvec_t _find_acfs(const std::string& base_path) {
 		// printf("found file: %s\n", data.cFileName);
 		if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			std::string name(data.cFileName);
-			
+
 			if (startsWith(name, "appmanifest_", 12) && endsWith(name, ".acf", 4)) {
 				printf("found file: %s\n", name.c_str());
 				acfs.push_back(base_path + "\\" + name);
@@ -530,8 +530,7 @@ static bool _find_steamapps_path(char* out, size_t out_len) {
 
 }
 
-static void _get_installed_games(game_manager_t* s) { 
-
+static void _get_installed_games(game_manager_t* s) {
     char buffer[1024];
     memset(buffer, 0, sizeof(buffer));
 
@@ -540,12 +539,12 @@ static void _get_installed_games(game_manager_t* s) {
 		abort();
 	}
 
-	printf("Detected Steam path: %s\n", buffer);
+	LOGI("Detected Steam path: %s\n", buffer);
 
 	std::string default_library_dir = buffer;
 	std::string libraryfolders_path = default_library_dir + "\\libraryfolders.vdf";
 
-	// std::string default_library_dir = "C:\\Program Files (x86)\\Steam\\steamapps"; // todo 
+	// std::string default_library_dir = "C:\\Program Files (x86)\\Steam\\steamapps"; // todo
 	// std::string libraryfolders_path = default_library_dir + "\\libraryfolders.vdf";
 	// std::string libraryfolders_path = "C:\\Code\\universal_time_control\\bad_libfolders.txt";
 
@@ -576,7 +575,7 @@ static void _get_installed_games(game_manager_t* s) {
 	// std::vector<std::string> acfs;
 
 	int64_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	printf("time: %lld\n", timestamp);
+	LOGI("time: %lld", timestamp);
 
 	sqlite3* db = db_owner_lock_and_get_db(s->db_owner);
 
@@ -686,6 +685,6 @@ static void _get_installed_games(game_manager_t* s) {
 
 
 
-void               game_manager_import_all(game_manager_t* s) {
+void  game_manager_import_all(game_manager_t* s) {
 	_get_installed_games(s);
 }
