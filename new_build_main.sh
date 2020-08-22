@@ -1,6 +1,8 @@
 #! /bin/bash
 set -e
 
+export PATH=$PATH:/D/i686-8.1.0-win32-sjlj-rt_v6-rev0/mingw32/bin
+
 # Future dev: Apologies for the hardcoded path :)
 # I have a strange Node dev environment and need to juggle various versions.
 /C/nodejs/node.exe ./build_cimgui.mjs
