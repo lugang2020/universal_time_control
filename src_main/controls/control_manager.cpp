@@ -18,40 +18,42 @@
 #include <vector>
 #include <string>
 
-namespace std {
-  template <> struct less<control_t>
-  {
-    bool operator()(const control_t& a, const control_t& b) const
-    {
-    	return a.id < b.id;
-    }
-  };
+namespace std
+{
+template <> struct less<control_t>
+{
+	bool operator()(const control_t& a, const control_t& b) const
+	{
+		return a.id < b.id;
+	}
+};
 
-  template <> struct hash<control_t>
-  {
-    size_t operator()(const control_t& a) const
-    {
-        // const std::string str =
-        //     std::string( reinterpret_cast<const std::string::value_type*>( &a ), sizeof(control_t) );
-        // return std::hash<std::string>()( str );
-        return a.id;
-    }
-  };
+template <> struct hash<control_t>
+{
+	size_t operator()(const control_t& a) const
+	{
+		// const std::string str =
+		//     std::string( reinterpret_cast<const std::string::value_type*>( &a ), sizeof(control_t) );
+		// return std::hash<std::string>()( str );
+		return a.id;
+	}
+};
 
-  template <> struct equal_to<control_t>
-  {
-    bool operator()(const control_t& a, const control_t& b) const
-    {
-    	return a.id == b.id;
-    }
-  };
+template <> struct equal_to<control_t>
+{
+	bool operator()(const control_t& a, const control_t& b) const
+	{
+		return a.id == b.id;
+	}
+};
 
 }
 
 typedef std::set<control_t> set_of_controls;
 typedef std::unordered_set<control_t> unordered_set_of_controls;
 
-struct _control_manager {
+struct _control_manager
+{
 	std::thread thread;
 	std::mutex main_mutex;
 	std::mutex update_and_delete_mutex;
@@ -72,21 +74,21 @@ struct _control_manager {
 	int64_t last_time;
 };
 
-static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct, const key_t& key, int activation_mode) {
+static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct, const key_t& key, int activation_mode)
+{
 	std::vector<control_t*> result;
-	for (const control_t& ctrl : ct->controls) {
-
-
-
+	for (const control_t& ctrl : ct->controls)
+	{
 		if (
-			   (key.v_code != 0)
-			&& (key.v_code    == ctrl.key.v_code)
-			&& (key.scan_code == ctrl.key.scan_code)
-			&& (key.ctrl      == ctrl.key.ctrl)
-			&& (key.alt       == ctrl.key.alt)
-			&& (key.shift     == ctrl.key.shift)
-			&& (ctrl.activation_mode == activation_mode)
-		) {
+		    (key.v_code != 0)
+		    && (key.v_code    == ctrl.key.v_code)
+		    && (key.scan_code == ctrl.key.scan_code)
+		    && (key.ctrl      == ctrl.key.ctrl)
+		    && (key.alt       == ctrl.key.alt)
+		    && (key.shift     == ctrl.key.shift)
+		    && (ctrl.activation_mode == activation_mode)
+		)
+		{
 			// printf("match!\n");
 			// naughty
 			// don't mutate the id of any of these controls...
@@ -101,11 +103,13 @@ static std::vector<control_t*> find_controls_matching_key(control_manager_t* ct,
 #include <chrono>
 
 
-static int64_t get_ms_epoch() {
+static int64_t get_ms_epoch()
+{
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-static int64_t get_seconds_epoch() {
+static int64_t get_seconds_epoch()
+{
 	return get_ms_epoch()/1000;
 }
 
@@ -142,7 +146,7 @@ static int64_t get_seconds_epoch() {
 // 		if (have_changed) {
 // 			ct->controls_changed.notify_all();
 // 		}
-		
+
 // 		{
 // 			std::unique_lock<std::mutex> keys_lock(*keys_mutex);
 // 			keys_cv->wait_for(
@@ -154,15 +158,15 @@ static int64_t get_seconds_epoch() {
 // 		ct->last_time = now_ms;
 // 	}
 
-	
+
 // }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 
-
-void control_manager_thread(control_manager_t* ct) {
+void control_manager_thread(control_manager_t* ct)
+{
 	// printf("%s\n", "control_manager_thread");
 
 	std::condition_variable* keys_cv = gui_impl_get_keys_cv();
@@ -183,103 +187,163 @@ void control_manager_thread(control_manager_t* ct) {
 			std::lock_guard<std::mutex> lock(ct->main_mutex);
 			if (ct->should_quit) return;
 
-
 			set_of_keys keys_down;
 			set_of_keys keys_pressed;
 
 			gui_impl_get_keys_data(&keys_down, &keys_pressed);
 
-			if (keys_pressed.size() > 0) {
-				// printf("Pressed: ");
-				for (const auto& key_pressed : keys_pressed) {
+			if (keys_pressed.size() > 0)
+			{
+				//LOGI("Pressed: ");
+				for (const auto& key_pressed : keys_pressed)
+				{
 					// printf("%s, ", key_pressed.desc_utf8);
 					auto matching_toggle_controls = find_controls_matching_key(ct, key_pressed, 2);
+					if (matching_toggle_controls.size() > 0 )
+					{
+						//lugang@20200823: first clear the previous state
+						for (const control_t& ctrl : ct->controls)
+						{
+							bool already_exist = false;
+							for (control_t* c : matching_toggle_controls)
+							{
+								if (c == (control_t*)&ctrl)
+								{
+									already_exist = true;
+									break;
+								}
+							}
+							if (already_exist)
+							{
+								LOGI("already in list");
+								continue;
+							}
 
-					for (control_t* control : matching_toggle_controls) {
-						control->is_toggled_on = !control->is_toggled_on;
-						have_changed = true;
+							control_t* c1 = (control_t*)&ctrl;
+							c1->is_toggled_on = false;
+							have_changed = true;
+						}
+
+
+						for (control_t* control : matching_toggle_controls)
+						{
+							control->is_toggled_on = !control->is_toggled_on;
+							have_changed = true;
+						}
 					}
 
 					auto matching_press_controls = find_controls_matching_key(ct, key_pressed, 0);
 
-					for (control_t* control : matching_press_controls) {
-						if (control->press_within_duration) continue;
-						if ((control->limit_mode==1) && control->is_in_cooldown) continue;
-						// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
-						if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
+					if (matching_press_controls.size() > 0 )
+					{
+						//lugang@20200823: first clear the previous state
+						for ( const control_t& ctrl : ct->controls)
+						{
+							bool already_exist = false;
+							for (control_t* c : matching_press_controls)
+							{
+								if (c == (control_t*)&ctrl)
+								{
+									already_exist = true;
+									break;
+								}
+							}
+							if (already_exist)
+							{
+								LOGI("already in list");
+								continue;
+							}
 
-						control->press_within_duration = true;
-						control->press_began = now;
-						if (control->limit_mode == 2) {
-							control->current_energy_level -= control->cost_per_use;
-							// control-
+							control_t* c1 = (control_t*)&ctrl;
+							c1->press_within_duration = false;
+							c1->is_in_cooldown = false;
 						}
-						have_changed = true;
 
-						// control->is_toggled_on = !control->is_toggled_on;
+						for (control_t* control : matching_press_controls)
+						{
+							if (control->press_within_duration) continue;
+							if ((control->limit_mode==1) && control->is_in_cooldown) continue;
+							// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
+							if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
+
+							control->press_within_duration = true;
+							control->press_began = now;
+							if (control->limit_mode == 2)
+							{
+								control->current_energy_level -= control->cost_per_use;
+								// control-
+							}
+							have_changed = true;
+
+							// control->is_toggled_on = !control->is_toggled_on;
+						}
 					}
-
 				}
 				// printf("\n");
 			}
 
-			
-			for (const auto& control : ct->controls) {
-				if (control.activation_mode == 0) {
 
-					if (control.press_within_duration) {
-						if ((now - control.press_began) >= control.duration) {
+			for (const auto& control : ct->controls)
+			{
+				if (control.activation_mode == 0)
+				{
+					if (control.press_within_duration)
+					{
+						if ((now - control.press_began) >= control.duration)
+						{
 							((control_t*)&control)->press_within_duration = false;
 
-							if (control.limit_mode==1) {
+							if (control.limit_mode==1)
+							{
 								((control_t*)&control)->is_in_cooldown = true;
 								((control_t*)&control)->cooldown_began = now;
 							}
 
 							have_changed = true;
 						}
-					} else {
-
-						if ((control.limit_mode == 1)  && (control.is_in_cooldown)) {
-							if ((now - control.cooldown_began) >= control.cooldown_secs) {
+					}
+					else
+					{
+						if ((control.limit_mode == 1)  && (control.is_in_cooldown))
+						{
+							if ((now - control.cooldown_began) >= control.cooldown_secs)
+							{
 								((control_t*)&control)->is_in_cooldown = false;
 								have_changed = true;
 							}
 						}
-
 					}
 
-
-					if (control.limit_mode == 2) {
+					if (control.limit_mode == 2)
+					{
 						bool was_at_max = (control.current_energy_level >= control.max_energy);
 						float to_add = ((float)control.recharge_rate)*delta_secs;
 						// printf("to add: %f", to_add);
 						((control_t*)&control)->current_energy_level += to_add;
-						if (control.current_energy_level > control.max_energy) {
+						if (control.current_energy_level > control.max_energy)
+						{
 							((control_t*)&control)->current_energy_level = control.max_energy;
 						}
-						if (!was_at_max) {
+						if (!was_at_max)
+						{
 							have_changed = true;
 						}
 					}
-
-
-
-
-				} else if (control.activation_mode == 1) {
+				}
+				else if (control.activation_mode == 1)
+				{
 					((control_t*)&control)->is_held = false;
 					have_changed = true;
 					// control.is_held = false;
 				}
-
-
-
 			}
 
-			for (const auto& key_down : keys_down) {
+			for (const auto& key_down : keys_down)
+			{
 				auto matching_hold_controls = find_controls_matching_key(ct, key_down, 1);
 
-				for (control_t* control : matching_hold_controls) {
+				for (control_t* control : matching_hold_controls)
+				{
 					control->is_held = true;
 					have_changed = true;
 				}
@@ -287,13 +351,14 @@ void control_manager_thread(control_manager_t* ct) {
 
 		}
 
-		if (have_changed) {
+		if (have_changed)
+		{
 			{
 				// std::unique_lock lock2(ct->controls_changed_mutex);
 			}
 			ct->controls_changed.notify_all();
 		}
-		
+
 
 		{
 
@@ -305,8 +370,8 @@ void control_manager_thread(control_manager_t* ct) {
 
 
 			keys_cv->wait_for(
-				keys_lock,
-				std::chrono::milliseconds(100)
+			    keys_lock,
+			    std::chrono::milliseconds(100)
 			);
 
 		}
@@ -318,58 +383,78 @@ void control_manager_thread(control_manager_t* ct) {
 		ct->last_time = now_ms;
 	}
 
-	
+
 }
 
 #pragma GCC diagnostic pop
 
-void control_manager_sleep(control_manager_t* c) {
+void control_manager_sleep(control_manager_t* c)
+{
 	std::unique_lock<std::mutex> lock(c->controls_changed_mutex);
 
 
 	c->controls_changed.wait_for(
-		lock,
-		std::chrono::milliseconds(500)
+	    lock,
+	    std::chrono::milliseconds(500)
 	);
 }
 
 // 0=nothing, 1=active, 2=unavailable
-static int _get_control_state(control_manager_t* c, const control_t* cont) {
+static int _get_control_state(control_manager_t* c, const control_t* cont)
+{
 	(void)c;
-	if (cont->activation_mode == 0) { // press
-		if ((cont->limit_mode == 1) && (cont->is_in_cooldown)) {
+	if (cont->activation_mode == 0)   // press
+	{
+		if ((cont->limit_mode == 1) && (cont->is_in_cooldown))
+		{
 			return 2;
-		} else if ((cont->limit_mode == 2) && (!cont->press_within_duration) && (cont->current_energy_level < cont->cost_per_use)) {
+		}
+		else if ((cont->limit_mode == 2) && (!cont->press_within_duration) && (cont->current_energy_level < cont->cost_per_use))
+		{
 			return 2;
-		} else {
+		}
+		else
+		{
 			return cont->press_within_duration;
 		}
-	} else if (cont->activation_mode == 1) { // hold
+	}
+	else if (cont->activation_mode == 1)     // hold
+	{
 		return cont->is_held ? 1 : 0;
-	} else if (cont->activation_mode == 2) { // toggle
+	}
+	else if (cont->activation_mode == 2)     // toggle
+	{
 		return cont->is_toggled_on ? 1 : 0;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // assume the control is active- what's its timescale?
-static float _get_timescale_for_control(control_manager_t* c, const control_t* cont) {
+static float _get_timescale_for_control(control_manager_t* c, const control_t* cont)
+{
 	(void)c;
 	// float mult = (cont->slow_or_fast == 1) ? 1.0 : -1.0;
 	float val = ((float)cont->slowdown_or_speedup_percent) / 100.0f;
-	if (cont->slow_or_fast == 1) {
+	if (cont->slow_or_fast == 1)
+	{
 		return 1.0 + val;
-	} else {
+	}
+	else
+	{
 		return 1.0 - val;
 	}
 }
 
-float control_manager_calculate_timescale(control_manager_t* ct) {
+float control_manager_calculate_timescale(control_manager_t* ct)
+{
 	std::lock_guard<std::mutex> lock(ct->main_mutex);
 	float timescale = 1.0;
 
-	for (const control_t& control : ct->controls) {
+	for (const control_t& control : ct->controls)
+	{
 		if (_get_control_state(ct, &control) != 1) continue;
 		timescale = _get_timescale_for_control(ct, &control);
 	}
@@ -420,17 +505,17 @@ static void load_control_from_db(sqlite3_stmt* get_from_db_stmt, control_t& cont
 	control.key.scan_code                      = sqlite3_column_int(get_from_db_stmt,  3);
 	 strncpy(control.key.desc_utf8, (const char*)sqlite3_column_text(get_from_db_stmt, 4), 31);
 	              control.key.desc_utf8[31] = '\0';
-	control.key.ctrl                           = sqlite3_column_int(get_from_db_stmt,  5) == 1; 
-	control.key.alt                            = sqlite3_column_int(get_from_db_stmt,  6) == 1; 
-	control.key.shift                          = sqlite3_column_int(get_from_db_stmt,  7) == 1; 
-	control.slow_or_fast                       = sqlite3_column_int(get_from_db_stmt,  8); 
-	control.slowdown_or_speedup_percent        = sqlite3_column_int(get_from_db_stmt,  9); 
-	control.duration                           = sqlite3_column_int(get_from_db_stmt,  10); 
-	control.limit_mode                         = sqlite3_column_int(get_from_db_stmt,  11); 
-	control.cooldown_secs                      = sqlite3_column_int(get_from_db_stmt,  12); 
-	control.max_energy                         = sqlite3_column_int(get_from_db_stmt,  13); 
-	control.cost_per_use                       = sqlite3_column_int(get_from_db_stmt,  14); 
-	control.recharge_rate                      = sqlite3_column_int(get_from_db_stmt,  15); 
+	control.key.ctrl                           = sqlite3_column_int(get_from_db_stmt,  5) == 1;
+	control.key.alt                            = sqlite3_column_int(get_from_db_stmt,  6) == 1;
+	control.key.shift                          = sqlite3_column_int(get_from_db_stmt,  7) == 1;
+	control.slow_or_fast                       = sqlite3_column_int(get_from_db_stmt,  8);
+	control.slowdown_or_speedup_percent        = sqlite3_column_int(get_from_db_stmt,  9);
+	control.duration                           = sqlite3_column_int(get_from_db_stmt,  10);
+	control.limit_mode                         = sqlite3_column_int(get_from_db_stmt,  11);
+	control.cooldown_secs                      = sqlite3_column_int(get_from_db_stmt,  12);
+	control.max_energy                         = sqlite3_column_int(get_from_db_stmt,  13);
+	control.cost_per_use                       = sqlite3_column_int(get_from_db_stmt,  14);
+	control.recharge_rate                      = sqlite3_column_int(get_from_db_stmt,  15);
 
 
 
@@ -677,10 +762,6 @@ void control_manager_foreach_control(control_manager_t* c, void(*cb)(void* conte
 	}
 
 	db_owner_surrender_db_and_unlock(c->db_owner);
-
-
-
-
 }
 
 

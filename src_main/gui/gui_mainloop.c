@@ -89,20 +89,6 @@ gui_mainloop_data_t* gui_mainloop_init(db_owner_t* db, control_manager_t* cm, ga
 	// colors[ImGuiCol_NavWindowingHighlight]  = (ImVec4){1.00f, 1.00f, 1.00f, 0.70f};
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	// igGetStyle()->scalea
 
 	ImGuiStyle_ScaleAllSizes(igGetStyle(), cd->dpi_scale);

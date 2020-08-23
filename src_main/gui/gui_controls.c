@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../util.h"
 #include "../../shared.h"
 
 static const ImVec2 VEC2_ZERO = {0,0};
@@ -67,6 +68,8 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
 		abort();
 	}
 
+	//LOGI("c->activation_mode is %d",c->activation_mode);
+
 	if (igBeginCombo("###activation_mode", options[c->activation_mode], 0))
 	{
 
@@ -84,8 +87,6 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
 				igSetItemDefaultFocus();
 			}
 		}
-
-
 
 		igEndCombo();
 	}
@@ -310,9 +311,6 @@ void draw_limits_block(control_t* c, float block_width)
 	}
 	else if (c->limit_mode == 2)
 	{
-
-
-
 		{
 			igAlignTextToFramePadding();
 			igText("Max energy:");
@@ -320,8 +318,6 @@ void draw_limits_block(control_t* c, float block_width)
 
 
 			float text_diff = igCalcTextSize("Recharge per sec:", NULL, false, -0.0).x - igCalcTextSize("Max energy:", NULL, false, -0.0).x;
-
-
 
 			igPushItemWidth(max_x - igGetCursorPosX() - text_diff);
 			igSetCursorPosX(igGetCursorPosX() + text_diff);
@@ -379,8 +375,6 @@ void draw_limits_block(control_t* c, float block_width)
 
 	}
 
-
-
 	// gui_util_spacing(4);
 	igEndGroup();
 }
@@ -405,7 +399,6 @@ void push_hue_tinted_col(ImGuiCol idx)
 	// hsv.z = val;
 	// hsv.w = _current_rgb->w;
 
-
 	float red, green, blue;
 	igColorConvertHSVtoRGB(hue, sat, val, &red, &green, &blue);
 
@@ -422,7 +415,6 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 	float overall_width = igGetContentRegionMax().x;// - (igGetStyle()->IndentSpacing*0.0);
 
 	// float width1 = (overall_width/4.0) -
-
 
 	ImVec2 p0 = igGetCursorScreenPos();
 
@@ -503,6 +495,7 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 		                         (state == 2) ? IM_COL32(255,20,20,255) : IM_COL32(20,255,20,255)
 		                         ,
 		                         4.0, ImDrawCornerFlags_Left);
+
 	}
 
 
@@ -516,13 +509,7 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 		ImDrawList_AddRectFilled(igGetWindowDrawList(), _p0, _p1, IM_COL32(128,128,255,255), 4.0, ImDrawCornerFlags_All);
 	}
 
-
-
-
 	gui_util_spacing(2);
-
-
-
 
 }
 
@@ -553,7 +540,6 @@ void gui_controls_draw(gui_controls_data_t* data)
 	// igText("Test");
 
 	// int a = 4;
-
 
 	igSpacing();
 
