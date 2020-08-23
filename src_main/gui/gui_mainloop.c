@@ -7,14 +7,16 @@
 
 static const ImVec2 VEC2_ZERO = {0,0};
 
-struct _gui_mainloop_data {
+struct _gui_mainloop_data
+{
 	gui_games_list_data_t* games_list_data;
 	gui_controls_data_t*     controls_data;
 	bool show_imgui_demo;
 	// db_owner_t* db_owner;
 };
 
-gui_mainloop_data_t* gui_mainloop_init(db_owner_t* db, control_manager_t* cm, game_manager_t* games) {
+gui_mainloop_data_t* gui_mainloop_init(db_owner_t* db, control_manager_t* cm, game_manager_t* games)
+{
 
 	gui_mainloop_data_t* data = malloc(sizeof(gui_mainloop_data_t));
 	gui_common_data_t* cd = gui_common_get_data();
@@ -24,19 +26,19 @@ gui_mainloop_data_t* gui_mainloop_init(db_owner_t* db, control_manager_t* cm, ga
 	igGetIO()->IniFilename = NULL;
 	// igStyleColorsDark(igGetStyle());
 	igStyleColorsLight(igGetStyle());
-	
+
 	igGetStyle()->WindowRounding = 0.0;
 
 	igGetStyle()->FrameRounding = 3.5;// * cd->dpi_scale;
 
 	// igGetStyle()->ChildBorderSize = 0.0;
 
-	
+
 
 	cd->font_main = ImFontAtlas_AddFontFromFileTTF(igGetIO()->Fonts, "data/DroidSans.ttf", 17.0f * cd->dpi_scale, NULL, NULL);
 	cd->font_bold = ImFontAtlas_AddFontFromFileTTF(igGetIO()->Fonts, "data/DroidSans-Bold.ttf", 17.0f * cd->dpi_scale, NULL, NULL);
 	cd->font_bold_big = ImFontAtlas_AddFontFromFileTTF(igGetIO()->Fonts, "data/DroidSans-Bold.ttf", 21.0f * cd->dpi_scale, NULL, NULL);
-	
+
 
 
 
@@ -120,7 +122,8 @@ gui_mainloop_data_t* gui_mainloop_init(db_owner_t* db, control_manager_t* cm, ga
 }
 
 
-void gui_mainloop_draw(gui_mainloop_data_t* data) {
+void gui_mainloop_draw(gui_mainloop_data_t* data)
+{
 	// float a = igGetIO()->DisplaySize.x;
 	// printf("win width: %f\n", a);
 
@@ -128,7 +131,7 @@ void gui_mainloop_draw(gui_mainloop_data_t* data) {
 	// data->show_imgui_demo
 
 	// bool dummy = true;
-	
+
 	// return;
 
 	// gui_impl_end_frame(); continue;
@@ -180,94 +183,101 @@ void gui_mainloop_draw(gui_mainloop_data_t* data) {
 	igBegin("OuterWrapperWithTabs", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
 
-    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-    if (igBeginTabBar("MainTabBar", tab_bar_flags))
-    {
+	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+	if (igBeginTabBar("MainTabBar", tab_bar_flags))
+	{
 		igSpacing();
 		igSpacing();
 
-        if (igBeginTabItem("My Games", NULL, 0))
-        {
-            // GLOBAL_selected_tab = TAB_GAMES;
+		if (igBeginTabItem("My Games", NULL, 0))
+		{
+			// GLOBAL_selected_tab = TAB_GAMES;
 
-        	igPushStyleColorU32(ImGuiCol_ScrollbarBg, IM_COL32(0, 0, 0, 0));
-            gui_games_list_draw(data->games_list_data);
-            igPopStyleColor(1);
+			igPushStyleColorU32(ImGuiCol_ScrollbarBg, IM_COL32(0, 0, 0, 0));
+			gui_games_list_draw(data->games_list_data);
+			igPopStyleColor(1);
 
-            igEndTabItem();
-        }
+			igEndTabItem();
+		}
 
-        ImGuiTabItemFlags f = 0; // ImGuiTabItemFlags_SetSelected
-        if (igBeginTabItem("Configure Time Controls", NULL, f))
-        {
-        	// GLOBAL_selected_tab = TAB_CONTROLS;
+		ImGuiTabItemFlags f = 0; // ImGuiTabItemFlags_SetSelected
+		if (igBeginTabItem("Configure Time Controls", NULL, f))
+		{
+			// GLOBAL_selected_tab = TAB_CONTROLS;
 
-        	// igBeginChild("ControlsChild", VEC2_ZERO, false, 0);
-        	igPushStyleColorU32(ImGuiCol_ScrollbarBg, IM_COL32(0, 0, 0, 0));
-            gui_controls_draw(data->controls_data);
-            igPopStyleColor(1);
-        	// igEndChild();
+			// igBeginChild("ControlsChild", VEC2_ZERO, false, 0);
+			igPushStyleColorU32(ImGuiCol_ScrollbarBg, IM_COL32(0, 0, 0, 0));
+			gui_controls_draw(data->controls_data);
+			igPopStyleColor(1);
+			// igEndChild();
 
-            igEndTabItem();
-        }
+			igEndTabItem();
+		}
 
-        if (igBeginTabItem("Help", NULL, 0)) {
-        	igBeginChild("HelpChild", VEC2_ZERO, false, 0);
-        	igText("TODO: Help messages here");
-        	igEndChild();
-        	igEndTabItem();
-        }
+		if (igBeginTabItem("Help", NULL, 0))
+		{
+			igBeginChild("HelpChild", VEC2_ZERO, false, 0);
+			igText("TODO: Help messages here");
+			igEndChild();
+			igEndTabItem();
+		}
 
-        if (igBeginTabItem("Settings", NULL, 0)) {
-        	igBeginChild("SettingsChild", VEC2_ZERO, false, 0);
+		if (igBeginTabItem("Settings", NULL, 0))
+		{
+			igBeginChild("SettingsChild", VEC2_ZERO, false, 0);
 
-        	igSpacing();
-        	igSpacing();
-        	igIndent(0);
+			igSpacing();
+			igSpacing();
+			igIndent(0);
 
-        	igButton("Reset All", VEC2_ZERO);
-        	igSameLine(0.0, 20.0 * gui_common_get_data()->dpi_scale);
-        	igAlignTextToFramePadding();
-        	igText("Remove all configured games and controls");
+			igButton("Reset All", VEC2_ZERO);
+			igSameLine(0.0, 20.0 * gui_common_get_data()->dpi_scale);
+			igAlignTextToFramePadding();
+			igText("Remove all configured games and controls");
 
-        	igEndChild();
-        	igEndTabItem();
-        }
+			igEndChild();
+			igEndTabItem();
+		}
 
-        if (igBeginTabItem("About", NULL, 0)) {
-        	igBeginChild("AboutChild", VEC2_ZERO, false, 0);
-        	igText("Universal Time Control");
-        	const char copyright_symbol_utf8[3] = {0xC2, 0xA9, 0x00};
-        	igText(copyright_symbol_utf8);
-        	igSameLine(0.0, 2.0 * gui_common_get_data()->dpi_scale);
-        	igText("Asdf");
-        	igEndChild();
-        	igEndTabItem();
-        }
-
-
-
-        if (igBeginTabItem("(DEBUG) UI test", NULL, 0)) {
-        	data->show_imgui_demo = true;
-        	igEndTabItem();
-        } else {
-        	data->show_imgui_demo = false;
-        }
+		if (igBeginTabItem("About", NULL, 0))
+		{
+			igBeginChild("AboutChild", VEC2_ZERO, false, 0);
+			igText("Universal Time Control");
+			const char copyright_symbol_utf8[3] = {0xC2, 0xA9, 0x00};
+			igText(copyright_symbol_utf8);
+			igSameLine(0.0, 2.0 * gui_common_get_data()->dpi_scale);
+			igText("Asdf");
+			igEndChild();
+			igEndTabItem();
+		}
 
 
 
+		if (igBeginTabItem("(DEBUG) UI test", NULL, 0))
+		{
+			data->show_imgui_demo = true;
+			igEndTabItem();
+		}
+		else
+		{
+			data->show_imgui_demo = false;
+		}
 
 
-        igEndTabBar();
-    }
 
-    igEnd();
 
-    if (data->show_imgui_demo) {
 
-	    igSetNextWindowFocus();
-	    igShowDemoWindow(&data->show_imgui_demo);
-    }
+		igEndTabBar();
+	}
+
+	igEnd();
+
+	if (data->show_imgui_demo)
+	{
+
+		igSetNextWindowFocus();
+		igShowDemoWindow(&data->show_imgui_demo);
+	}
 
 
 	// ImVec4 next_col = {1.0, 0,0,1.0};
@@ -296,7 +306,7 @@ void gui_mainloop_draw(gui_mainloop_data_t* data) {
 	// igPopStyleColor(1);
 
 
-    // igText("This is the Avocado tab!\nblah blah blah blah blah\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	// igText("This is the Avocado tab!\nblah blah blah blah blah\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
 
 
@@ -304,7 +314,8 @@ void gui_mainloop_draw(gui_mainloop_data_t* data) {
 
 }
 
-void gui_mainloop_cleanup(gui_mainloop_data_t* data) {
+void gui_mainloop_cleanup(gui_mainloop_data_t* data)
+{
 	gui_games_list_cleanup(data->games_list_data);
 	gui_controls_cleanup(data->controls_data);
 
