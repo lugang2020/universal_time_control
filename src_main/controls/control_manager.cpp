@@ -356,33 +356,33 @@ void control_manager_sleep(control_manager_t* c)
 static int _get_control_state(control_manager_t* c, const control_t* cont)
 {
 	(void)c;
-	if (cont->activation_mode == 0)   // press
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_PRESS)   // press
 	{
-		if ((cont->limit_mode == 1) && (cont->is_in_cooldown))
+		if ((cont->limit_mode == CTRL_LIMITED_MODE_COOLDOWN) && (cont->is_in_cooldown))
 		{
-			return 2;
+			return CTRL_STATE_UNAVAILABLE;
 		}
-		else if ((cont->limit_mode == 2) && (!cont->press_within_duration) && (cont->current_energy_level < cont->cost_per_use))
+
+		if ((cont->limit_mode == CTRL_LIMITED_MODE_ENERGY) && (!cont->press_within_duration) && (cont->current_energy_level < cont->cost_per_use))
 		{
-			return 2;
+			return CTRL_STATE_UNAVAILABLE;
 		}
-		else
-		{
-			return cont->press_within_duration;
-		}
+
+		return cont->press_within_duration;
 	}
-	else if (cont->activation_mode == 1)     // hold
+
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_HOLD)     // hold
 	{
-		return cont->is_held ? 1 : 0;
+		return cont->is_held ? CTRL_STATE_ACTIVE : CTRL_STATE_NOTHING;
 	}
-	else if (cont->activation_mode == 2)     // toggle
+
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)     // toggle
 	{
-		return cont->is_toggled_on ? 1 : 0;
+		return cont->is_toggled_on ? CTRL_STATE_ACTIVE : CTRL_STATE_NOTHING;
 	}
-	else
-	{
-		return false;
-	}
+
+	return CTRL_STATE_NOTHING;
+
 }
 
 // assume the control is active- what's its timescale?
@@ -408,7 +408,7 @@ float control_manager_calculate_timescale(control_manager_t* ct)
 
 	for (const control_t& control : ct->controls)
 	{
-		if (_get_control_state(ct, &control) != 1) continue;
+		if (_get_control_state(ct, &control) != CTRL_STATE_ACTIVE) continue;
 		timescale = _get_timescale_for_control(ct, &control);
 	}
 

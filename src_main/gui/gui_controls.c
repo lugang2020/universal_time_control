@@ -297,8 +297,6 @@ void draw_limits_block(control_t* c, float block_width)
 			}
 		}
 
-
-
 		igEndCombo();
 	}
 
