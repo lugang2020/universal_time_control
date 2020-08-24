@@ -199,85 +199,45 @@ void control_manager_thread(control_manager_t* ct)
 				{
 					// printf("%s, ", key_pressed.desc_utf8);
 					auto matching_toggle_controls = find_controls_matching_key(ct, key_pressed, 2);
-					if (matching_toggle_controls.size() > 0 )
+					auto matching_press_controls = find_controls_matching_key(ct, key_pressed, 0);
+
+					if (matching_toggle_controls.size() > 0 || matching_press_controls.size() > 0)
 					{
 						//lugang@20200823: first clear the previous state
 						for (const control_t& ctrl : ct->controls)
 						{
-							bool already_exist = false;
-							for (control_t* c : matching_toggle_controls)
-							{
-								if (c == (control_t*)&ctrl)
-								{
-									already_exist = true;
-									break;
-								}
-							}
-							if (already_exist)
-							{
-								LOGI("already in list");
-								continue;
-							}
-
 							control_t* c1 = (control_t*)&ctrl;
 							c1->is_toggled_on = false;
-							have_changed = true;
-						}
-
-
-						for (control_t* control : matching_toggle_controls)
-						{
-							control->is_toggled_on = !control->is_toggled_on;
-							have_changed = true;
-						}
-					}
-
-					auto matching_press_controls = find_controls_matching_key(ct, key_pressed, 0);
-
-					if (matching_press_controls.size() > 0 )
-					{
-						//lugang@20200823: first clear the previous state
-						for ( const control_t& ctrl : ct->controls)
-						{
-							bool already_exist = false;
-							for (control_t* c : matching_press_controls)
-							{
-								if (c == (control_t*)&ctrl)
-								{
-									already_exist = true;
-									break;
-								}
-							}
-							if (already_exist)
-							{
-								LOGI("already in list");
-								continue;
-							}
-
-							control_t* c1 = (control_t*)&ctrl;
 							c1->press_within_duration = false;
 							c1->is_in_cooldown = false;
 						}
-
-						for (control_t* control : matching_press_controls)
-						{
-							if (control->press_within_duration) continue;
-							if ((control->limit_mode==1) && control->is_in_cooldown) continue;
-							// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
-							if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
-
-							control->press_within_duration = true;
-							control->press_began = now;
-							if (control->limit_mode == 2)
-							{
-								control->current_energy_level -= control->cost_per_use;
-								// control-
-							}
-							have_changed = true;
-
-							// control->is_toggled_on = !control->is_toggled_on;
-						}
 					}
+
+					for (control_t* control : matching_toggle_controls)
+					{
+						control->is_toggled_on = !control->is_toggled_on;
+						have_changed = true;
+					}
+
+					for (control_t* control : matching_press_controls)
+					{
+						if (control->press_within_duration) continue;
+						if ((control->limit_mode==1) && control->is_in_cooldown) continue;
+						// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
+						if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
+
+						control->press_within_duration = true;
+						control->press_began = now;
+						if (control->limit_mode == 2)
+						{
+							control->current_energy_level -= control->cost_per_use;
+							// control-
+						}
+						have_changed = true;
+
+						// control->is_toggled_on = !control->is_toggled_on;
+					}
+
 				}
 				// printf("\n");
 			}
