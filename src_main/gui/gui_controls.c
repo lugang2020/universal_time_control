@@ -113,6 +113,12 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
 
 	if (is_key_mode && (data->selected_id == c->id))
 	{
+		//20200824： try to fix issue 7
+		c->is_toggled_on = false;
+		c->press_within_duration = false;
+		c->is_in_cooldown = false;
+
+
 		igButton("Press key. ESC to clear", btn_size);
 
 		// ImVec2 window_size = igGetWindowSize();

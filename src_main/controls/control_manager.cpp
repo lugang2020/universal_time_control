@@ -203,7 +203,7 @@ void control_manager_thread(control_manager_t* ct)
 
 					if (matching_toggle_controls.size() > 0 || matching_press_controls.size() > 0)
 					{
-						//lugang@20200823: first clear the previous state
+						//@20200823: first clear the previous state
 						for (const control_t& ctrl : ct->controls)
 						{
 							control_t* c1 = (control_t*)&ctrl;
@@ -321,13 +321,9 @@ void control_manager_thread(control_manager_t* ct)
 
 
 		{
-
 			// std::condition_variable test;
 
-
-
 			std::unique_lock<std::mutex> keys_lock(*keys_mutex);
-
 
 			keys_cv->wait_for(
 			    keys_lock,
@@ -335,8 +331,6 @@ void control_manager_thread(control_manager_t* ct)
 			);
 
 		}
-
-
 
 		// util_sleep_for_ms(125);
 
@@ -351,7 +345,6 @@ void control_manager_thread(control_manager_t* ct)
 void control_manager_sleep(control_manager_t* c)
 {
 	std::unique_lock<std::mutex> lock(c->controls_changed_mutex);
-
 
 	c->controls_changed.wait_for(
 	    lock,
