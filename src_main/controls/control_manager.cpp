@@ -185,6 +185,8 @@ bool is_control_in_limit_mode(control_t *control)
 //true if changed
 bool control_update_limit(control_t *control)
 {
+	int64_t now = get_seconds_epoch();
+
 	if ((control->limit_mode == CTRL_LIMITED_MODE_COOLDOWN)  && (control->is_in_cooldown))
 	{
 		if ((now - control->cooldown_began) >= control->cooldown_secs)
@@ -195,25 +197,25 @@ bool control_update_limit(control_t *control)
 
 
 	}
-}
 
-if (control->limit_mode == CTRL_LIMITED_MODE_ENERGY)
-{
-	bool was_at_max = (control->current_energy_level >= control->max_energy);
-	float to_add = ((float)control.recharge_rate)*delta_secs;
-	// printf("to add: %f", to_add);
-	control->current_energy_level += to_add;
-	if (control.current_energy_level > control->max_energy)
-	{
-		control->current_energy_level = control->max_energy;
-	}
-	if (!was_at_max)
-	{
-		return true;
-	}
-}
 
-return false;
+	if (control->limit_mode == CTRL_LIMITED_MODE_ENERGY)
+	{
+		bool was_at_max = (control->current_energy_level >= control->max_energy);
+		float to_add = ((float)control->recharge_rate)*delta_secs;
+		// printf("to add: %f", to_add);
+		control->current_energy_level += to_add;
+		if (control.current_energy_level > control->max_energy)
+		{
+			control->current_energy_level = control->max_energy;
+		}
+		if (!was_at_max)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -237,7 +239,8 @@ void control_manager_thread(control_manager_t* ct)
 		// printf("delta: %f\n", delta_secs);
 		// printf("delta: %i\n", (int) delta);
 
-		{//Key handling begin
+		{
+			//Key handling begin
 			std::lock_guard<std::mutex> lock(ct->main_mutex);
 			if (ct->should_quit) return;
 
