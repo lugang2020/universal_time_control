@@ -222,13 +222,13 @@ void control_manager_thread(control_manager_t* ct)
 					for (control_t* control : matching_press_controls)
 					{
 						if (control->press_within_duration) continue;
-						if ((control->limit_mode==1) && control->is_in_cooldown) continue;
+						if ((control->limit_mode == CTRL_LIMITED_MODE_COOLDOWN) && control->is_in_cooldown) continue;
 						// if ((control->limit_mode==2) && !control->have_enough_energy) continue;
-						if ((control->limit_mode==2) && (control->current_energy_level < control->cost_per_use)) continue;
+						if ((control->limit_mode == CTRL_LIMITED_MODE_ENERGY) && (control->current_energy_level < control->cost_per_use)) continue;
 
 						control->press_within_duration = true;
 						control->press_began = now;
-						if (control->limit_mode == 2)
+						if (control->limit_mode == CTRL_LIMITED_MODE_ENERGY)
 						{
 							control->current_energy_level -= control->cost_per_use;
 							// control-
@@ -245,7 +245,7 @@ void control_manager_thread(control_manager_t* ct)
 
 			for (const auto& control : ct->controls)
 			{
-				if (control.activation_mode == 0)
+				if (control.activation_mode == CTRL_ACTIVATION_MODE_PRESS)
 				{
 					if (control.press_within_duration)
 					{
@@ -253,7 +253,7 @@ void control_manager_thread(control_manager_t* ct)
 						{
 							((control_t*)&control)->press_within_duration = false;
 
-							if (control.limit_mode==1)
+							if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
 							{
 								((control_t*)&control)->is_in_cooldown = true;
 								((control_t*)&control)->cooldown_began = now;
@@ -264,7 +264,7 @@ void control_manager_thread(control_manager_t* ct)
 					}
 					else
 					{
-						if ((control.limit_mode == 1)  && (control.is_in_cooldown))
+						if ((control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)  && (control.is_in_cooldown))
 						{
 							if ((now - control.cooldown_began) >= control.cooldown_secs)
 							{
@@ -274,7 +274,7 @@ void control_manager_thread(control_manager_t* ct)
 						}
 					}
 
-					if (control.limit_mode == 2)
+					if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
 					{
 						bool was_at_max = (control.current_energy_level >= control.max_energy);
 						float to_add = ((float)control.recharge_rate)*delta_secs;
@@ -290,7 +290,7 @@ void control_manager_thread(control_manager_t* ct)
 						}
 					}
 				}
-				else if (control.activation_mode == 1)
+				else if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 				{
 					((control_t*)&control)->is_held = false;
 					have_changed = true;
