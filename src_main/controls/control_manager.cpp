@@ -183,9 +183,8 @@ bool is_control_in_limit_mode(control_t *control)
 
 
 //true if changed
-bool control_update_limit(control_t *control)
+bool control_update_limit(control_t *control, int64_t now, 	int64_t now_ms, 	int64_t delta, float delta_secs)
 {
-	int64_t now = get_seconds_epoch();
 
 	if ((control->limit_mode == CTRL_LIMITED_MODE_COOLDOWN)  && (control->is_in_cooldown))
 	{
@@ -205,7 +204,7 @@ bool control_update_limit(control_t *control)
 		float to_add = ((float)control->recharge_rate)*delta_secs;
 		// printf("to add: %f", to_add);
 		control->current_energy_level += to_add;
-		if (control.current_energy_level > control->max_energy)
+		if (control->current_energy_level > control->max_energy)
 		{
 			control->current_energy_level = control->max_energy;
 		}
@@ -321,7 +320,7 @@ void control_manager_thread(control_manager_t* ct)
 						}
 					}
 
-					have_changed = control_update_limit(control);
+					have_changed = control_update_limit((control_t*)&control,now,  now_ms,  delta, delta_secs);
 				}
 				else if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 				{
