@@ -29,12 +29,13 @@ typedef struct {
 	int max_energy;
 	int cost_per_use;
 	int recharge_rate;
+	int min_energy_to_activate;
 
 	// not persisted
 	bool is_toggled_on;
 	bool is_held;
-	bool press_within_duration;
-	int64_t press_began;
+	bool press_within_duration;//20200827: will reuse for toggle/hold as well
+	int64_t press_began;//20200827: will reuse for toggle/hold as well
 
 	bool is_in_cooldown;
 	int64_t cooldown_began;
