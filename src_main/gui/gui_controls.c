@@ -313,10 +313,18 @@ void draw_limits_block(control_t* c, float block_width)
 
 		if (c->activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 		{
+			
+			igPushItemWidth(block_width - igCalcTextSize(" Max Usage per hold", NULL, false, -0.0).x - igGetStyle()->ItemInnerSpacing.x);
+			igInputInt(" Max Usage per hold###MaxHold", &c->duration, 1, 5, 0);
+			igPopItemWidth();
+			cap_int(&c->duration, 0, 999);
 		}
 		else if (c->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
 		{
-		 
+		 	igPushItemWidth(block_width - igCalcTextSize(" Max duration per toggle", NULL, false, -0.0).x - igGetStyle()->ItemInnerSpacing.x);
+			igInputInt(" Max duration per toggle###MaxHold", &c->duration, 1, 5, 0);
+			igPopItemWidth();
+			cap_int(&c->duration, 0, 999);
 		}
 
 
@@ -353,6 +361,20 @@ void draw_limits_block(control_t* c, float block_width)
 			cap_int(&c->cost_per_use, 0, 999);
 			igPopItemWidth();
 		}
+
+		if ( c->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE || c->activation_mode == CTRL_ACTIVATION_MODE_HOLD)
+		{
+			igAlignTextToFramePadding();
+			igText("Minimum amount to activate:");
+			gui_util_same_line();
+
+			igPushItemWidth(max_x - igGetCursorPosX());
+			igInputInt("###min_energy_to_activate", &c->min_energy_to_activate, 1, 5, 0);
+			cap_int(&c->min_energy_to_activate, 0, 999);
+			igPopItemWidth();
+		}
+
+		
 
 		{
 			igAlignTextToFramePadding();
@@ -529,6 +551,7 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 static void draw_control_cb(void* _data, const control_t* _control)
 {
 	gui_controls_data_t* data = (gui_controls_data_t*) _data;
+
 
 	control_t mutable_control = *_control;
 	igPushIDInt(mutable_control.id);

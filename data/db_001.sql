@@ -73,7 +73,8 @@ create table if not exists control (
 
 	max_energy                  integer default 100,
 	cost_per_use                integer default 25,
-	recharge_rate               integer default 5
+	recharge_rate               integer default 5,
+	min_energy_to_activate		integer default 20
 
 );
 
