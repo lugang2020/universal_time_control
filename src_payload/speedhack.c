@@ -75,7 +75,7 @@ void speedhack_set_timescale(float scale) {
 // }
 
 REAL_AND_FAKE(BOOL, WINAPI, QueryPerformanceCounter, LARGE_INTEGER* lpPerformanceCount) {
-	static volatile LONG lock = 0;
+	//static volatile LONG lock = 0;
 	// while(InterlockedCompareExchange(&lock, 1, 0)) ;
 
 	static int64_t qpc_prev = 0;
@@ -88,7 +88,7 @@ REAL_AND_FAKE(BOOL, WINAPI, QueryPerformanceCounter, LARGE_INTEGER* lpPerformanc
 		qpc_prev = qpc_current;
 		qpc_fake = qpc_current;
 		*((int64_t*)lpPerformanceCount) = qpc_current;
-		lock = 0;
+		//lock = 0;
 		return TRUE;
 	}
 
@@ -100,12 +100,12 @@ REAL_AND_FAKE(BOOL, WINAPI, QueryPerformanceCounter, LARGE_INTEGER* lpPerformanc
 	*((int64_t*)lpPerformanceCount) = qpc_fake;
 
 	qpc_prev = qpc_current;
-	lock = 0;
+	//lock = 0;
 	return TRUE;
 }
 
 REAL_AND_FAKE(DWORD, WINAPI, timeGetTime, void) {
-	static volatile LONG lock = 0;
+	//static volatile LONG lock = 0;
 	// while(InterlockedCompareExchange(&lock, 1, 0)) ;
 
 	static DWORD prev = 0, fake = 0;
@@ -115,7 +115,7 @@ REAL_AND_FAKE(DWORD, WINAPI, timeGetTime, void) {
 	if (!prev || !fake) {
 		prev = current;
 		fake = current;
-		lock = 0;
+		//lock = 0;
 		return current;
 	}
 
@@ -126,7 +126,7 @@ REAL_AND_FAKE(DWORD, WINAPI, timeGetTime, void) {
 	fake += scaled_dword;
 	prev = current;
 	DWORD to_return = fake;
-	lock = 0;
+	//lock = 0;
 	return to_return;
 
 }

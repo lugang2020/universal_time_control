@@ -521,12 +521,12 @@ float control_manager_calculate_timescale(control_manager_t * ct)
 
 // int from_db_row_cb(void* _c, int num_cols) {
 // }
-static const char * GET_CONTROLS_QUERY = R "" "(
+static const char * GET_CONTROLS_QUERY = R"""(
         select * from control;
-		 )" "";
+		 )""";
 
 
-static const char * UPDATE_CONTROLS_QUERY = R "" "(
+static const char * UPDATE_CONTROLS_QUERY = R"""(
         update control set
         activation_mode = ?
                           ,key__v_code = ?
@@ -547,7 +547,7 @@ static const char * UPDATE_CONTROLS_QUERY = R "" "(
                           where
                           id = ?
                                ;
-		 )" "";
+		 )""";
 
 #include <string.h>
 

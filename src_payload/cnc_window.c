@@ -67,13 +67,21 @@ DWORD WINAPI cnc_threadproc(void* param) {
 
 HINSTANCE g_hinstDLL;
 
+
+
 void setup_cnc_window(HINSTANCE hinstDLL) {
 	g_hinstDLL = hinstDLL;
 	CreateThread(NULL, 0, cnc_threadproc, NULL, 0, NULL);
 	Sleep(250);
 }
 
+
+//#pragma GCC 					diagnostic push
+#pragma GCC 					diagnostic ignored "-Wunused-parameter"
+
+
 static void _process_cmd(HWND hWnd, timecontrol_ipc_cmd_t* cmd) {
+	
 	if (cmd->cmd_type == UTC_IPC_CMD_SET_TIMESCALE) {
 		speedhack_set_timescale(cmd->timeScale);
 	} else if (cmd->cmd_type == UTC_IPC_CMD_SHOULD_UNLOAD) {
