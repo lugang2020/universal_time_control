@@ -543,6 +543,7 @@ static const char * UPDATE_CONTROLS_QUERY = R "" "(
                           ,max_energy = ?
                           ,cost_per_use = ?
                           ,recharge_rate = ?
+                          ,min_energy_to_activate = ?
                           where
                           id = ?
                                ;
@@ -574,7 +575,7 @@ static void load_control_from_db(sqlite3_stmt * get_from_db_stmt, control_t & co
 	control.max_energy	= sqlite3_column_int(get_from_db_stmt, 13);
 	control.cost_per_use = sqlite3_column_int(get_from_db_stmt, 14);
 	control.recharge_rate = sqlite3_column_int(get_from_db_stmt, 15);
-
+	control.min_energy_to_activate = sqlite3_column_int(get_from_db_stmt, 16);
 
 
 	control.is_toggled_on = false;
@@ -712,7 +713,8 @@ static void update_control_in_db(sqlite3 * db, const control_t & control)
 	sqlite3_bind_int(update_stmt, 13, control.max_energy);
 	sqlite3_bind_int(update_stmt, 14, control.cost_per_use);
 	sqlite3_bind_int(update_stmt, 15, control.recharge_rate);
-	sqlite3_bind_int(update_stmt, 16, control.id);
+	sqlite3_bind_int(update_stmt, 16, control.min_energy_to_activate);
+	sqlite3_bind_int(update_stmt, 17, control.id);
 
 
 	if (sqlite3_step(update_stmt) != SQLITE_DONE)

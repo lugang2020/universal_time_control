@@ -62,7 +62,7 @@ void draw_hotkey_block(gui_controls_data_t* data, control_t* c, float block_widt
 
 	// igComboStr("###activation_mode", &c->activation_mode, "Press to Use\0Hold to Use\0Toggle to Use\0\0", -1);
 
-	if (c->activation_mode < 0 || c->activation_mode > 2)
+	if (c->activation_mode < CTRL_ACTIVATION_MODE_PRESS || c->activation_mode > CTRL_ACTIVATION_MODE_TOGGLE)
 	{
 		printf("unknown activation mode\n");
 		abort();
@@ -303,7 +303,7 @@ void draw_limits_block(control_t* c, float block_width)
 
 	igPopItemWidth();
 
-	if (c->limit_mode == 1)
+	if (c->limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
 	{
 
 		igPushItemWidth(block_width - igCalcTextSize(" seconds", NULL, false, -0.0).x - igGetStyle()->ItemInnerSpacing.x);
@@ -311,9 +311,17 @@ void draw_limits_block(control_t* c, float block_width)
 		igPopItemWidth();
 		cap_int(&c->cooldown_secs, 1, 999);
 
+		if (c->activation_mode == CTRL_ACTIVATION_MODE_HOLD)
+		{
+		}
+		else if (c->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
+		{
+		 
+		}
+
 
 	}
-	else if (c->limit_mode == 2)
+	else if (c->limit_mode == CTRL_LIMITED_MODE_ENERGY)
 	{
 		{
 			igAlignTextToFramePadding();
@@ -455,13 +463,13 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 
 	// igPopStyleColor(count);
 
-	if (c->activation_mode == 0)
+	if (c->activation_mode == CTRL_ACTIVATION_MODE_PRESS)
 	{
 		draw_duration_block(c);
 		gui_util_same_line();
 	}
 
-	if (c->activation_mode == 0)
+	//if (c->activation_mode == CTRL_ACTIVATION_MODE_PRESS)
 	{
 		int count = 0;
 		for (int i = ImGuiCol_Border; i < ImGuiCol_COUNT; i++)
@@ -484,8 +492,9 @@ void draw_control(gui_controls_data_t* data, control_t* c)
 
 	int state = control_manager_duringcallback_get_control_state(data->cm, c);
 
-	if (state != 0)
+	if (state != CTRL_STATE_NOTHING)
 	{
+		//high light active control
 		ImVec2 _p0 = p0;
 		ImVec2 _p1 = p1;
 
@@ -574,3 +583,4 @@ void gui_controls_cleanup(gui_controls_data_t* data)
 {
 	free(data);
 }
+
