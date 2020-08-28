@@ -296,18 +296,29 @@ void control_manager_thread(control_manager_t * ct)
 					{
 						control_t * 	c1	= (control_t *) &ctrl;
 
+						if (std::find(matching_toggle_controls.begin(), matching_toggle_controls.end(), c1) != matching_toggle_controls.end())
+						{
+							continue;
+						}
+
+						if (std::find(matching_press_controls.begin(), matching_press_controls.end(), c1) != matching_press_controls.end())
+						{
+							continue;
+						}
+
+						c1->is_held	= false;
 						c1->is_toggled_on	= false;
 						c1->press_within_duration = false;
-
-						//c1->is_in_cooldown = false;
 					}
 				}
 
 				for (control_t * control: matching_toggle_controls)
 				{
+					
 					if (control->is_toggled_on)
 					{
 						control->is_toggled_on = false;
+						control->press_within_duration = false;
 						have_changed = true;
 						continue;
 					}
@@ -360,6 +371,7 @@ void control_manager_thread(control_manager_t * ct)
 					{
 						if ((now - control.press_began) >= control.duration)
 						{
+							LOGI("began:%d, duration:%d",now - control.press_began,control.duration);
 							((control_t *) &control)->press_within_duration = false;
 
 							if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
@@ -378,7 +390,7 @@ void control_manager_thread(control_manager_t * ct)
 				if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 				{
 					((control_t *) &control)->is_held = false;
-					have_changed		= true;
+					have_changed = true;
 
 					// control.is_held = false;
 				}
@@ -388,16 +400,30 @@ void control_manager_thread(control_manager_t * ct)
 			for (const auto & key_down: keys_down)
 			{
 				auto matching_hold_controls = find_controls_matching_key(ct, key_down, CTRL_ACTIVATION_MODE_HOLD);
+				if (matching_hold_controls.size() > 0)
+				{
+					for (const control_t & ctrl: ct->controls)
+					{
+						control_t * 	c1	= (control_t *) &ctrl;
+						if (std::find(matching_hold_controls.begin(), matching_hold_controls.end(), c1) != matching_hold_controls.end())
+						{
+							continue;
+						}
+
+
+						c1->is_held	= false;
+						c1->is_toggled_on	= false;
+						c1->press_within_duration = false;
+					}
+				}
 
 				for (control_t * control: matching_hold_controls)
 				{
-					if (control->press_within_duration)
-						continue;
+					//if (control->press_within_duration)	continue;
 
 					if (is_control_in_limit_mode(control))
 						continue;
 
-					control->is_toggled_on = !control->is_toggled_on;
 					control->press_within_duration = true;
 					control->press_began = now;
 
@@ -456,31 +482,39 @@ void control_manager_sleep(control_manager_t * c)
 // 0=nothing, 1=active, 2=unavailable
 static int _get_control_state(control_manager_t * c, const control_t * cont)
 {
-	(void)
-	c;
-
-	if (cont->activation_mode == CTRL_ACTIVATION_MODE_PRESS) // press
+	(void)c;
+#if 1
+	if (is_control_in_limit_mode((control_t *)cont))
 	{
-		if ((cont->limit_mode == CTRL_LIMITED_MODE_COOLDOWN) && (cont->is_in_cooldown))
-		{
-			return CTRL_STATE_UNAVAILABLE;
-		}
+		LOGI("UNAVAILABLE");
+		return CTRL_STATE_UNAVAILABLE;
+	}
+#else
+	if ((cont->limit_mode == CTRL_LIMITED_MODE_COOLDOWN) && (cont->is_in_cooldown))
+	{
+		return CTRL_STATE_UNAVAILABLE;
+	}
 
-		if ((cont->limit_mode == CTRL_LIMITED_MODE_ENERGY) && (!cont->press_within_duration) &&
-			 (cont->current_energy_level < cont->cost_per_use))
-		{
-			return CTRL_STATE_UNAVAILABLE;
-		}
+	if ((cont->limit_mode == CTRL_LIMITED_MODE_ENERGY) && (!cont->press_within_duration) &&
+		 (cont->current_energy_level < cont->cost_per_use))
+	{
+		return CTRL_STATE_UNAVAILABLE;
+	}
+#endif
 
+
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_PRESS) 
+	{
 		return cont->press_within_duration;
 	}
 
-	if (cont->activation_mode == CTRL_ACTIVATION_MODE_HOLD) // hold
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_HOLD && cont->press_within_duration) 
 	{
+		LOGI("cont->is_held is %d",cont->is_held);
 		return cont->is_held ? CTRL_STATE_ACTIVE: CTRL_STATE_NOTHING;
 	}
 
-	if (cont->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE) // toggle
+	if (cont->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE && cont->press_within_duration)
 	{
 		return cont->is_toggled_on ? CTRL_STATE_ACTIVE: CTRL_STATE_NOTHING;
 	}

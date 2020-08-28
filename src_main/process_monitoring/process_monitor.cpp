@@ -190,7 +190,7 @@ static void _get_running_processes(vec_process_path_and_pid_t* out_vec) {
 		DWORD path_len = MAX_PATH;
 		BOOL path_query_ok = QueryFullProcessImageNameW(process, 0, path_name_wide, &path_len);
 		if (!path_query_ok) {
-			printf("failed to query: %ls\n", entry.szExeFile);
+			//printf("failed to query: %ls\n", entry.szExeFile);
 			CloseHandle(process);
 			// goto next_process;
 			if (!Process32NextW(snapshot, &entry)) break; else continue;
