@@ -36,6 +36,7 @@ typedef struct {
 	bool is_held;
 	bool press_within_duration;//20200827: will reuse for toggle/hold as well
 	int64_t press_began;//20200827: will reuse for toggle/hold as well
+	int64_t last_key_press;//for hold
 
 	bool is_in_cooldown;
 	int64_t cooldown_began;

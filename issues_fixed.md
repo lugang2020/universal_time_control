@@ -40,3 +40,6 @@ c) press cooldown
 d) press energy
 ----e) toggle cooldown
 f) toggle energy
+hold no limit
+press no limit
+toggle no limit
