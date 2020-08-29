@@ -371,7 +371,7 @@ void control_manager_thread(control_manager_t * ct)
 					{
 						if ((now - control.press_began) >= control.duration)
 						{
-							LOGI("began:%d, duration:%d",now - control.press_began,control.duration);
+							//LOGI("began:%d, duration:%d",now - control.press_began,control.duration);
 							((control_t *) &control)->press_within_duration = false;
 
 							if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
@@ -486,7 +486,7 @@ static int _get_control_state(control_manager_t * c, const control_t * cont)
 #if 1
 	if (is_control_in_limit_mode((control_t *)cont))
 	{
-		LOGI("UNAVAILABLE");
+		//LOGI("UNAVAILABLE");
 		return CTRL_STATE_UNAVAILABLE;
 	}
 #else
@@ -510,7 +510,6 @@ static int _get_control_state(control_manager_t * c, const control_t * cont)
 
 	if (cont->activation_mode == CTRL_ACTIVATION_MODE_HOLD && cont->press_within_duration) 
 	{
-		LOGI("cont->is_held is %d",cont->is_held);
 		return cont->is_held ? CTRL_STATE_ACTIVE: CTRL_STATE_NOTHING;
 	}
 
@@ -527,8 +526,7 @@ static int _get_control_state(control_manager_t * c, const control_t * cont)
 // assume the control is active- what's its timescale?
 static float _get_timescale_for_control(control_manager_t * c, const control_t * cont)
 {
-	(void)
-	c;
+	(void)c;
 
 	// float mult = (cont->slow_or_fast == 1) ? 1.0 : -1.0;
 	float			val = ((float) cont->slowdown_or_speedup_percent) / 100.0f;
