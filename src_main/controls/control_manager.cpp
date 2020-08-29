@@ -515,19 +515,13 @@ void control_manager_thread(control_manager_t * ct)
 					{
 						control_t * 	c1	= (control_t *) &ctrl;
 
-						if (c1->activation_mode != CTRL_ACTIVATION_MODE_HOLD)
-						{
-							continue;				
-						}
-
-						
 						if (std::find(matching_hold_controls.begin(), matching_hold_controls.end(), c1) != matching_hold_controls.end())
 						{
 							continue;
 						}
 
 						c1->is_held	= false;
-						//c1->is_toggled_on	= false;
+						c1->is_toggled_on	= false;
 						c1->press_within_duration = false;
 					}
 				}
