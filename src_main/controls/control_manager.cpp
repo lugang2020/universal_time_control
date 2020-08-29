@@ -204,7 +204,7 @@ bool is_control_in_limit_mode(control_t * control)
 		return false;
 	}
 
-	if (control->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
+	//if (control->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
 	{
 		if (control->current_energy_level < control->min_energy_to_activate)
 		{
@@ -244,13 +244,17 @@ bool control_update_limit_status(control_t * control, int64_t now, int64_t now_m
 
 	// printf("to add: %f", to_add);
 	control->current_energy_level += to_add;
+	if (control->current_energy_level > control->max_energy)
+	{
+		control->current_energy_level = control->max_energy;
+	}
 
-	if (control->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
+	if (control->activation_mode != CTRL_ACTIVATION_MODE_PRESS)
 	{
 		int state = _get_control_state(control);
 		if (state == CTRL_STATE_NOTHING)
 		{
-			control->current_energy_level = control->max_energy;
+			//control->current_energy_level = control->max_energy;
 			return true;
 		}
 		else if (state == CTRL_STATE_ACTIVE)
@@ -265,12 +269,6 @@ bool control_update_limit_status(control_t * control, int64_t now, int64_t now_m
 		}
 	}
 	
-
-	if (control->current_energy_level > control->max_energy)
-	{
-		control->current_energy_level = control->max_energy;
-	}
-
 	if (!was_at_max)
 	{
 		return true;
@@ -439,7 +437,7 @@ void control_manager_thread(control_manager_t * ct)
 						{
 							((control_t *) &control)->press_within_duration = false;
 							((control_t *) &control)->is_toggled_on	= false;
-							((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
+							//((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
 						}
 					}
 			
@@ -488,7 +486,12 @@ void control_manager_thread(control_manager_t * ct)
 					}
 					else if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
 					{
-						
+						if (control.current_energy_level < control.min_energy_to_activate)
+						{
+							((control_t *) &control)->press_within_duration = false;
+							((control_t *) &control)->is_held	= false;
+							//((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
+						}
 					}
 					else
 					{
@@ -535,18 +538,13 @@ void control_manager_thread(control_manager_t * ct)
 					control->last_key_press = now;
 					if (control->press_within_duration)	continue;
 
-					if (is_control_in_limit_mode(control))
-						continue;
+					if (is_control_in_limit_mode(control))	continue;
 
 					control->press_within_duration = true;
 					control->press_began = now;
+
+					//LOGI("hold key detected");
 					
-
-					if (control->limit_mode == CTRL_LIMITED_MODE_ENERGY)
-					{
-						control->current_energy_level -= control->cost_per_use;
-					}
-
 					control->is_held	= true;
 					have_changed		= true;
 				}
