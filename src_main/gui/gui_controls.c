@@ -346,6 +346,7 @@ void draw_limits_block(control_t* c, float block_width)
 			igPopItemWidth();
 		}
 
+		if (c->activation_mode == CTRL_ACTIVATION_MODE_PRESS)
 		{
 			igAlignTextToFramePadding();
 			igText("Cost per use:");
@@ -361,6 +362,23 @@ void draw_limits_block(control_t* c, float block_width)
 			cap_int(&c->cost_per_use, 0, 999);
 			igPopItemWidth();
 		}
+		else
+		{
+			igAlignTextToFramePadding();
+			igText("Cost per second:");
+			gui_util_same_line();
+
+
+			float text_diff = igCalcTextSize("Recharge per sec:", NULL, false, -0.0).x - igCalcTextSize("Cost per use:", NULL, false, -0.0).x;
+
+			igPushItemWidth(max_x - igGetCursorPosX() - text_diff);
+			// igIndent(igGetCursorPosX());
+			igSetCursorPosX(igGetCursorPosX() + text_diff);
+			igInputInt("###cost_per_use", &c->cost_per_use, 1, 5, 0);
+			cap_int(&c->cost_per_use, 0, 999);
+			igPopItemWidth();
+		}
+	
 
 		if ( c->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE || c->activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 		{
