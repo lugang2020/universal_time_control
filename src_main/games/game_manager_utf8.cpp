@@ -178,7 +178,7 @@ game_manager_t*   game_manager_create(db_owner_t* db) {
 	s->db_owner = db;
 	return s;
 }
-void               game_manager_destroy(game_manager_t* s) {
+void game_manager_destroy(game_manager_t* s) {
 	delete s;
 }
 

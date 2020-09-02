@@ -15,7 +15,7 @@ void util_wide_to_utf8(wchar_t* wide, size_t wide_len, char* utf8, size_t utf8_l
 
 void util_casefold_utf8(const char* in, char* out, size_t out_len);
 
-#define  LOGI(...)  printf("%s:%d:%s  ",__FILE__,__LINE__,__FUNCTION__);printf(__VA_ARGS__);printf("\n")
+#define  LOGI(...)  do {printf("%s:%d:%s  ",__FILE__,__LINE__,__FUNCTION__);printf(__VA_ARGS__);printf("\n");}while(0)
 
 SEPPLES_GUARD_END
 

@@ -2,12 +2,14 @@ import { spawn, spawnSync } from 'child_process';
 
 export function bashSync(str) {
 	let result = spawnSync("C:/Git/usr/bin/bash.exe", ["-c", str], { "stdio": "inherit" });
+	//let result = spawnSync("C:/PROGRA~1/Git/usr/bin/bash.exe", ["-c", str], { "stdio": "inherit" });
 	if (result.status !== 0) process.exit(1);
 	return result;
 }
 
 export function bashAsync(str) { return new Promise((resolve, reject) => {
 	let child_process = spawn("C:/Git/usr/bin/bash.exe", ["-c", str], { "stdio": "inherit" });
+	//let child_process = spawn("C:/PROGRA~1/Git/usr/bin/bash.exe", ["-c", str], { "stdio": "inherit" });
 	child_process.on("exit", (code, signal) => { if (code == 0) resolve(); else reject(); });
 }); }
 

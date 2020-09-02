@@ -208,14 +208,11 @@ static void _game_manager_thread(game_manager_t* s) {
 
 		s->is_importing = true;
 
-			game_manager_import_all(s);
+		game_manager_import_all(s);
 
 		s->is_importing = false;
 		s->should_import = false;
-
-
 	}
-
 
 }
 
@@ -630,15 +627,9 @@ static void _get_installed_games(game_manager_t* s) {
 					}
 				}
 
-
-
-
-
 			} catch (const std::exception& e) {
 				printf("Error reading acf (or finding EXEs) %s: %s\n", acf.c_str(), e.what());
 			}
-
-
 
 		}
 
