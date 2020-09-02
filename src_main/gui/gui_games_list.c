@@ -136,8 +136,7 @@ gui_games_list_data_t * gui_games_list_init(db_owner_t * db_owner, game_manager_
 	data->games 		= games;
 
 	sqlite3 *		db	= db_owner_lock_and_get_db(db_owner);
-	int 			prepare_result = sqlite3_prepare_v2(db, get_games_statement_sql, -1, &data->get_games_statement, 
-		NULL);
+	int 			prepare_result = sqlite3_prepare_v2(db, get_games_statement_sql, -1, &data->get_games_statement, NULL);
 
 	if (prepare_result != SQLITE_OK)
 	{
@@ -220,6 +219,7 @@ static void draw_game(gui_games_list_data_t * data, game_t * game)
 	// igText("Steam appid %i", game->steam_appid);
 	if (!game->is_steam)
 	{
+		//LOGI("Non steam game");
 		gui_util_text_with_font("Manually added", cd->font_bold);
 	}
 
@@ -254,8 +254,8 @@ static void draw_games(gui_games_list_data_t * data)
 
 	while (1)
 	{
-		if (sqlite3_step(data->get_games_statement) != SQLITE_ROW)
-			break;
+		//LOGI("E");
+		if (sqlite3_step(data->get_games_statement) != SQLITE_ROW)	break;
 
 		game_t			game;
 
@@ -270,8 +270,6 @@ static void draw_games(gui_games_list_data_t * data)
 			printf("was=%i, now=%i\n", game_backup.enabled, game.enabled);
 			reserialize_game(db, data->update_game_statement, &game);
 		}
-
-
 
 		// const char* path = (const char*)sqlite3_column_text(data->get_games_statement, 0);
 		// char path_utf8_lower[MAX_PATH];

@@ -174,11 +174,12 @@ static void delete_old_steam_games_from_db(sqlite3* db, int timestamp) {
 
 
 static void insert_exe_to_db(sqlite3* db, int game_id, const char* path) {
+	LOGI("%d,%s",game_id,path);
 	sqlite3_stmt* insert_stmt;
 	int prepare_result = sqlite3_prepare_v2(db, "insert into game_exe (game_id, path) values (?, ?);", -1, &insert_stmt, NULL);
 	if (prepare_result != SQLITE_OK) {
 		const char* err = sqlite3_errmsg(db);
-		printf("sqlite err5: %s\n", err);
+		LOGI("sqlite err5: %s\n", err);
 		abort();
 	}
 	sqlite3_bind_int(insert_stmt, 1, game_id);
@@ -186,7 +187,7 @@ static void insert_exe_to_db(sqlite3* db, int game_id, const char* path) {
 
 	if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
 		const char* err = sqlite3_errmsg(db);
-		printf("sqlite insert game exe err: %s\n", err);
+		LOGI("sqlite insert game exe err: %s\n", err);
 		abort();
 	}
 
@@ -446,7 +447,7 @@ next_exe:;
 static strvec_t _find_acfs(const std::string& base_path) {
 	strvec_t acfs;
 
-	printf("searching: %s\n", base_path.c_str());
+	LOGI("searching: %s\n", base_path.c_str());
 
 	WIN32_FIND_DATAA data;
 	std::string path_suffixed = base_path + "\\*";
@@ -463,7 +464,7 @@ static strvec_t _find_acfs(const std::string& base_path) {
 			std::string name(data.cFileName);
 
 			if (startsWith(name, "appmanifest_", 12) && endsWith(name, ".acf", 4)) {
-				printf("found file: %s\n", name.c_str());
+				LOGI("found file: %s\n", name.c_str());
 				acfs.push_back(base_path + "\\" + name);
 			}
 		}
@@ -561,7 +562,7 @@ static void _get_installed_games(game_manager_t* s) {
 		}
 
 		for (const auto& lib : libraries) {
-			printf("Library: %s\n", lib.c_str());
+			LOGI("Library: %s\n", lib.c_str());
 		}
 	} catch (const std::exception& e) {
 		printf("Error reading libraryfolders: %s\n", e.what());
@@ -582,7 +583,7 @@ static void _get_installed_games(game_manager_t* s) {
 		// acfs.insert(acfs.end(), _acfs.begin(), _acfs.end());
 
 		for (const auto& acf : _acfs) {
-			printf("%s\n", acf.c_str());
+			LOGI("%s\n", acf.c_str());
 
 			try {
 				auto vdf = _read_vdf(acf);
@@ -598,7 +599,7 @@ static void _get_installed_games(game_manager_t* s) {
 					continue;
 				}
 				std::string install_dir = lib + "\\common\\" + install_it->second;
-				printf("game path: %s\n", install_dir.c_str());
+				LOGI("game path: %s\n", install_dir.c_str());
 
 				auto appid_it = vdf.attribs.find("appid");
 				if (appid_it == vdf.attribs.end()) {
@@ -628,7 +629,7 @@ static void _get_installed_games(game_manager_t* s) {
 				}
 
 			} catch (const std::exception& e) {
-				printf("Error reading acf (or finding EXEs) %s: %s\n", acf.c_str(), e.what());
+				LOGI("Error reading acf (or finding EXEs) %s: %s\n", acf.c_str(), e.what());
 			}
 
 		}
