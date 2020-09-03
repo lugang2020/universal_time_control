@@ -173,6 +173,28 @@ static void delete_old_steam_games_from_db(sqlite3* db, int timestamp) {
 }
 
 
+static void delete_old_exe_from_db(sqlite3* db, char *exe_path) {
+	sqlite3_stmt* del_stmt;
+	int prepare_result = sqlite3_prepare_v2(db, "delete from game where path = ?;", -1, &del_stmt, NULL);
+	if (prepare_result != SQLITE_OK) {
+		const char* err = sqlite3_errmsg(db);
+		printf("sqlite err4: %s\n", err);
+		abort();
+	}
+	sqlite3_bind_text(del_stmt, 1, exe_path);
+
+	if (sqlite3_step(del_stmt) != SQLITE_DONE) {
+		const char* err = sqlite3_errmsg(db);
+		printf("sqlite delete old steam games err: %s\n", err);
+		abort();
+	}
+
+	sqlite3_reset(del_stmt);
+	sqlite3_clear_bindings(del_stmt);
+	sqlite3_finalize(del_stmt);
+}
+
+
 static void insert_exe_to_db(sqlite3* db, int game_id, const char* path) {
 	LOGI("%d,%s",game_id,path);
 	sqlite3_stmt* insert_stmt;
@@ -669,14 +691,25 @@ static void _get_installed_games(game_manager_t* s) {
 
 
 
-
-
-
-
-
-
-
-
 void  game_manager_import_all(game_manager_t* s) {
 	_get_installed_games(s);
 }
+
+
+void insert_non_steam_game(game_manager_t* s,char *exe_path)
+{
+
+	sqlite3* db = db_owner_lock_and_get_db(s->db_owner);
+
+	delete_old_exe_from_db(db,exe_path);
+
+	
+	insert_exe_to_db(db, -1, exe_path);
+
+
+
+	delete_old_steam_games_from_db(db, timestamp);
+	db_owner_surrender_db_and_unlock(s->db_owner);
+
+}
+

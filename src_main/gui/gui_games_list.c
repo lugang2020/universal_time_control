@@ -169,8 +169,7 @@ gui_games_list_data_t * gui_games_list_init(db_owner_t * db_owner, game_manager_
 
 static void draw_game(gui_games_list_data_t * data, game_t * game)
 {
-	(void)
-	data;
+	(void)data;
 
 	gui_common_data_t * cd = gui_common_get_data();
 
@@ -318,7 +317,7 @@ void gui_games_list_draw(gui_games_list_data_t * data)
 		memset(szPath,0,1024);
 		if (get_non_steam_game_path(szPath))
 		{
-			
+			insert_non_steam_game(data->games,szPath);
 		}
 	}
 		
