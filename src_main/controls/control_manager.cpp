@@ -578,8 +578,7 @@ void control_manager_sleep(control_manager_t * c)
 {
 	std::unique_lock < std::mutex > lock(c->controls_changed_mutex);
 
-	c->controls_changed.wait_for(lock, 
-		std::chrono::milliseconds(500));
+	c->controls_changed.wait_for(lock, std::chrono::milliseconds(500));
 }
 
 
@@ -907,7 +906,7 @@ control_manager_t * control_manager_create(db_owner_t * _db)
 		if (sqlite3_step(get_from_db_stmt) != SQLITE_ROW)
 			break;
 
-		printf("processing control from DB\n");
+		LOGI("processing control from DB");
 		control_t		control;
 
 		// control.id = sqlite3_column_int(get_from_db_stmt, 0);
@@ -925,7 +924,7 @@ control_manager_t * control_manager_create(db_owner_t * _db)
 	db_owner_surrender_db_and_unlock(_db);
 
 
-	c->thread			= std::thread(control_manager_thread, c);
+	c->thread = std::thread(control_manager_thread, c);
 
 	return c;
 }

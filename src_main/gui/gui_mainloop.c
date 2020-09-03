@@ -5,6 +5,10 @@
 
 #include <stdlib.h>
 
+#include "../util.h"
+
+
+
 static const ImVec2 VEC2_ZERO = {0,0};
 
 struct _gui_mainloop_data
@@ -127,6 +131,7 @@ void gui_mainloop_draw(gui_mainloop_data_t* data)
 	// igGetStyle()->Colors[ImGuiCol_WindowBg] = col;
 
 	//ImGuiWindowFlags_NoTitleBar
+	LOGI("E");
 
 	int width  = igGetIO()->DisplaySize.x;
 	int height = igGetIO()->DisplaySize.y;

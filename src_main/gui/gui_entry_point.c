@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../util.h"
+
+
 #include "../../third_party/sqlite/sqlite3.h"
 #include "../db/db_owner.h"
 #include "../controls/control_manager.h"

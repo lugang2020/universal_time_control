@@ -426,7 +426,7 @@ static void _start_managing_new_processes(
 
 static void _update_injected_timescales(process_monitor_t* p) {
 	for (auto& managed_exe : p->managed_processes) {
-		printf("Managed: (PID %lu) %s\n", managed_exe.pid, managed_exe.path);
+		LOGI("Managed: (PID %lu) %s\n", managed_exe.pid, managed_exe.path);
 
 		timecontrol_ipc_cmd_t command;
 		command.cmd_type = UTC_IPC_CMD_SET_TIMESCALE;
@@ -468,7 +468,7 @@ static int _timescale_update_thread(void* _p) {
 
 	while (1) {
 		if (_get_should_quit(p)) {
-			printf("timescale update thread should break\n");
+			LOGI("timescale update thread should break");
 			break;
 		}
 
