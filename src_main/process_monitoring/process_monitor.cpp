@@ -261,9 +261,9 @@ static void _load_enabled_from_db(process_monitor_t* p, vec_process_path_t* out_
 		}
 
 
-		if (strstr(path_utf8_lower, "mindustry") != 0) {
+		/*if (strstr(path_utf8_lower, "mindustry") != 0) {
 			printf("DB: %s\n", path_utf8_lower);
-		}
+		}*/
 
 		
 
