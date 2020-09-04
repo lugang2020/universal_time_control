@@ -22,4 +22,6 @@ void               game_manager_import_all(game_manager_t* s);
 
 void game_manager_set_should_import(game_manager_t* s);
 
+void insert_non_steam_game(game_manager_t* s,char *exe_path);
+
 SEPPLES_GUARD_END

@@ -173,8 +173,8 @@ static void _get_running_processes(vec_process_path_and_pid_t* out_vec) {
 	while (1) {
 		// etc
 
-		// printf("pid: %lu\n", entry.th32ProcessID);
-		// printf("\nPROCESS NAME:  %ls", entry.szExeFile );
+		//LOGI("pid: %lu\n", entry.th32ProcessID);
+		//LOGI("\nPROCESS NAME:  %ls", entry.szExeFile );
 		HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, entry.th32ProcessID);
 		if (!process) {
 			// printf("failed to open: %ls\n", entry.szExeFile);
@@ -250,7 +250,7 @@ static void _load_enabled_from_db(process_monitor_t* p, vec_process_path_t* out_
 		if (sqlite3_step(p->get_enabled_paths_statement) != SQLITE_ROW) break;
 
 		const char* path = (const char*)sqlite3_column_text(p->get_enabled_paths_statement, 0);
-
+		
 		char path_utf8_lower[MAX_PATH];
 		util_casefold_utf8(path, path_utf8_lower, MAX_PATH-1);
 

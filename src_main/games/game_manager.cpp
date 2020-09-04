@@ -173,27 +173,6 @@ static void delete_old_steam_games_from_db(sqlite3* db, int timestamp) {
 }
 
 
-static void delete_old_exe_from_db(sqlite3* db, char *exe_path) {
-	sqlite3_stmt* del_stmt;
-	int prepare_result = sqlite3_prepare_v2(db, "delete from game where path = ?;", -1, &del_stmt, NULL);
-	if (prepare_result != SQLITE_OK) {
-		const char* err = sqlite3_errmsg(db);
-		printf("sqlite err4: %s\n", err);
-		abort();
-	}
-	sqlite3_bind_text(del_stmt, 1, exe_path);
-
-	if (sqlite3_step(del_stmt) != SQLITE_DONE) {
-		const char* err = sqlite3_errmsg(db);
-		printf("sqlite delete old steam games err: %s\n", err);
-		abort();
-	}
-
-	sqlite3_reset(del_stmt);
-	sqlite3_clear_bindings(del_stmt);
-	sqlite3_finalize(del_stmt);
-}
-
 
 static void insert_exe_to_db(sqlite3* db, int game_id, const char* path) {
 	LOGI("%d,%s",game_id,path);
@@ -695,20 +674,41 @@ void  game_manager_import_all(game_manager_t* s) {
 	_get_installed_games(s);
 }
 
+#include <string.h>
 
 void insert_non_steam_game(game_manager_t* s,char *exe_path)
 {
 
 	sqlite3* db = db_owner_lock_and_get_db(s->db_owner);
 
-	delete_old_exe_from_db(db,exe_path);
+	char name[1024]; 
+
+	strcpy(name,exe_path);
+  	char *ch; //define this
+  	ch = strtok(name, "\\"); //first split
+  	while (ch != NULL) {
+    	strcpy(name, ch);//copy result
+     	 //printf("%s\n", ch);
+      	ch = strtok(NULL, "\\");//next split
+  	}
+
+	char *end = strstr(name,".");
+	if (end)
+	{
+		*end = 0;
+	}
+
+  	LOGI("last filename: %s,exe_path:%s", name,exe_path);//result filename
+
+
+	int64_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+	int id = upsert_steam_game(db, -1, name, true, timestamp);
+	delete_exes_from_db(db, id);
 
 	
-	insert_exe_to_db(db, -1, exe_path);
+	insert_exe_to_db(db,id, exe_path);
 
-
-
-	delete_old_steam_games_from_db(db, timestamp);
 	db_owner_surrender_db_and_unlock(s->db_owner);
 
 }
