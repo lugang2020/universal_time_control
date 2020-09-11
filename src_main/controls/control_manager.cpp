@@ -204,13 +204,6 @@ bool is_control_in_limit_mode(control_t * control)
 		return false;
 	}
 
-	//if (control->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
-	{
-		if (control->current_energy_level < control->min_energy_to_activate)
-		{
-			return true;
-		}
-	}
 
 	return false;
 }
@@ -221,7 +214,6 @@ bool is_control_in_limit_mode(control_t * control)
 //true if changed
 bool control_update_limit_status(control_t * control, int64_t now, int64_t now_ms, int64_t delta, float delta_secs)
 {
-
 	if ((control->limit_mode == CTRL_LIMITED_MODE_COOLDOWN) && (control->is_in_cooldown))
 	{
 		if ((now - control->cooldown_began) >= control->cooldown_secs)
@@ -263,6 +255,8 @@ bool control_update_limit_status(control_t * control, int64_t now, int64_t now_m
 			if (control->current_energy_level < 0)
 			{
 				control->current_energy_level = 0;
+				control->is_toggled_on = false;
+				control->press_within_duration = false;
 			}
 
 			return true;
@@ -356,6 +350,10 @@ void control_manager_thread(control_manager_t * ct)
 
 					if (is_control_in_limit_mode(control)) continue;
 
+					if (control->current_energy_level < control->min_energy_to_activate)
+					{
+						continue;
+					}
 
 					control->is_toggled_on = !control->is_toggled_on; 
 					control->press_within_duration = control->is_toggled_on;
@@ -433,11 +431,11 @@ void control_manager_thread(control_manager_t * ct)
 					}
 					else if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
 					{
-						if (control.current_energy_level < control.min_energy_to_activate)
+						if (control.current_energy_level <=0)
 						{
 							((control_t *) &control)->press_within_duration = false;
 							((control_t *) &control)->is_toggled_on	= false;
-							//((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
+							((control_t *) &control)->current_energy_level = 0;
 						}
 					}
 			
@@ -486,11 +484,11 @@ void control_manager_thread(control_manager_t * ct)
 					}
 					else if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
 					{
-						if (control.current_energy_level < control.min_energy_to_activate)
+						if (control.current_energy_level < 1)
 						{
 							((control_t *) &control)->press_within_duration = false;
 							((control_t *) &control)->is_held	= false;
-							//((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
+							((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
 						}
 					}
 					else
@@ -618,6 +616,7 @@ int _get_control_state(/*control_manager_t * c,*/ const control_t * cont)
 
 	if (cont->activation_mode == CTRL_ACTIVATION_MODE_TOGGLE)
 	{
+		//LOGI("cont->is_toggled_on is %d",cont->is_toggled_on);
 		return cont->is_toggled_on ? CTRL_STATE_ACTIVE: CTRL_STATE_NOTHING;
 	}
 
