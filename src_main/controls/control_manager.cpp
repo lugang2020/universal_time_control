@@ -339,13 +339,13 @@ void control_manager_thread(control_manager_t * ct)
 				for (control_t * control: matching_toggle_controls)
 				{
 					
-					/*if (control->is_toggled_on)
+					if (control->is_toggled_on)
 					{
 						control->is_toggled_on = false;
 						control->press_within_duration = false;
 						have_changed = true;
 						continue;
-					}*/
+					}
 					
 					if (control->limit_mode != CTRL_LIMITED_MODE_NO_LIMIT && control->press_within_duration) continue;
 
