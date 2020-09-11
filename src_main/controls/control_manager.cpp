@@ -256,6 +256,7 @@ bool control_update_limit_status(control_t * control, int64_t now, int64_t now_m
 			{
 				control->current_energy_level = 0;
 				control->is_toggled_on = false;
+				control->is_held = false;
 				control->press_within_duration = false;
 			}
 
@@ -444,19 +445,19 @@ void control_manager_thread(control_manager_t * ct)
 				
 				if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD)
 				{
+
+					if (delta >= 100)
+					{
+						((control_t *) &control)->is_held	= false;
+						((control_t *) &control)->press_within_duration = false;
+										
+						have_changed = true;
+					}
+
+				
 					if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
 					{
-						int key_press_inteval = now - control.last_key_press;
-						//LOGI("inteval:%f",key_press_inteval);
-						if (key_press_inteval > 1)
-						{
-							//LOGI("key un hold:%d",key_press_inteval);
-							key_press_inteval = 0;
-							((control_t *) &control)->is_held	= false;
-							((control_t *) &control)->press_within_duration = false;
-							
-							have_changed = true;
-						}
+					
 						
 						//LOGI("duration:%f,press_within_duration:%d,is_hold:%d",key_press_inteval,control.press_within_duration,control.is_held);
 						if (control.press_within_duration)
@@ -484,12 +485,13 @@ void control_manager_thread(control_manager_t * ct)
 					}
 					else if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
 					{
-						if (control.current_energy_level < 1)
+						/*if (control.current_energy_level <= 0)
 						{
 							((control_t *) &control)->press_within_duration = false;
 							((control_t *) &control)->is_held	= false;
-							((control_t *) &control)->current_energy_level = ((control_t *) &control)->max_energy;
-						}
+							((control_t *) &control)->current_energy_level = 0;
+							have_changed = true;
+						}*/
 					}
 					else
 					{
@@ -527,10 +529,15 @@ void control_manager_thread(control_manager_t * ct)
 				for (control_t * control: matching_hold_controls)
 				{
 					//LOGI("hold key begin");
-					control->last_key_press = now;
+					//control->last_key_press = now;
 					if (control->press_within_duration)	continue;
 
 					if (is_control_in_limit_mode(control))	continue;
+
+					if (control->current_energy_level < control->min_energy_to_activate)
+					{
+						continue;
+					}
 
 					control->press_within_duration = true;
 					control->press_began = now;
