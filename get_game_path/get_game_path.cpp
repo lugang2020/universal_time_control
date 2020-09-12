@@ -294,9 +294,44 @@ HRESULT BasicFileOpen()
 }
 
 
+void play(char* path);
 // Application entry point
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
+	LPWSTR* szArgList;
+	int argCount;
+
+	szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
+	if (szArgList == NULL)
+	{
+		//MessageBox(NULL, L"Unable to parse command line", L"Error", MB_OK);
+		return 10;
+	}
+
+	//play("Entering.mp3");
+	
+	//printf("here 1:%d\n",argCount);
+	if (argCount > 1)
+	{
+		LPWSTR op = szArgList[1];
+		//wprintf(L"here %s\n",op);
+		if (StrStrW(op, L"start"))
+		{
+			//printf("here 2\n");
+			play("Entering.mp3");
+
+		}
+		else
+		{
+			//printf("here 3\n");
+			play("Exiting.mp3");
+		}
+
+		LocalFree(szArgList);
+
+		return 0;
+	}
+
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr))
 	{
