@@ -293,6 +293,36 @@ HRESULT BasicFileOpen()
 	return hr;
 }
 
+#pragma warning (disable : 4996)
+#if 0
+void logMessage(const char* fmt, ...)
+{
+
+
+	va_list argptr;
+	char msg[1024];
+	va_start(argptr, fmt);
+	vsprintf_s(msg, 1024, fmt, argptr);
+	va_end(argptr);
+
+	char* logPath = "vcam.log";
+
+	static FILE* logf = NULL;
+
+	if (logf != NULL)
+	{
+		fprintf(logf, "%s\n", msg);
+		fflush(logf);
+	}
+	else
+	{
+		logf = fopen(logPath, "a");
+	}
+
+	//fclose(pFile);
+
+}
+#endif
 
 void play(char* path);
 // Application entry point
@@ -308,26 +338,39 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 		return 10;
 	}
 
-	//play("Entering.mp3");
-	
-	//printf("here 1:%d\n",argCount);
+	char cur_dir[255];
+	GetModuleFileName(NULL, cur_dir, MAX_PATH);
+	char* last_slash = strrchr(cur_dir, '\\');
+	*(++last_slash) = 0;
+
 	if (argCount > 1)
 	{
+		HANDLE hMutexHandle = CreateMutexW(NULL, TRUE, L"get_game_path.is_running");
+		if (GetLastError() == ERROR_ALREADY_EXISTS)
+		{
+			//logMessage("UTC is already running. (Check your system tray!)");
+			return 1;
+		}
+
 		LPWSTR op = szArgList[1];
-		//wprintf(L"here %s\n",op);
+		char mp3_path[255];
+
 		if (StrStrW(op, L"start"))
 		{
-			//printf("here 2\n");
-			play("Entering.mp3");
+			sprintf(mp3_path, "%s\\%s", cur_dir, "Entering.mp3");
+			//logMessage(mp3_path);
+			play(mp3_path);
 
 		}
 		else
 		{
-			//printf("here 3\n");
-			play("Exiting.mp3");
+			sprintf(mp3_path, "%s\\%s", cur_dir, "Exiting.mp3");
+			//logMessage(mp3_path);
+			play(mp3_path);
 		}
 
 		LocalFree(szArgList);
+		ReleaseMutex(hMutexHandle);
 
 		return 0;
 	}

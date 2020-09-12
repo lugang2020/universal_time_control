@@ -643,23 +643,113 @@ static float _get_timescale_for_control(control_manager_t * c, const control_t *
 }
 
 
+
+void StartProcess2( LPCWSTR exe_path,LPCWSTR args)
+{
+	
+	PROCESS_INFORMATION processInfo;
+	memset(&processInfo, 0, sizeof(processInfo));
+	STARTUPINFOW startupInfo;
+	memset(&startupInfo, 0,  sizeof(startupInfo));
+	startupInfo.cb = sizeof startupInfo ;
+
+	if (CreateProcessW((LPWSTR)exe_path,(LPWSTR)args,
+		NULL,  // process security
+		NULL,  // thread security
+		TRUE,  //inheritance
+		0,     //no startup flags
+		NULL,  // no special environment
+		NULL,  //default startup directory
+		&startupInfo,
+		&processInfo))
+	{
+	 
+		WaitForSingleObject(processInfo.hProcess,INFINITE);
+		CloseHandle(processInfo.hThread);
+		CloseHandle(processInfo.hProcess);
+	}
+	else
+	{
+		LOGI("CreateProcessW failed");
+	}
+
+}
+
+
+
+
+
+bool play_sound(int speedup)
+{
+	wchar_t exe_path[MAX_PATH];
+	wchar_t cmd_line[MAX_PATH];
+
+
+	GetModuleFileNameW(NULL, exe_path, MAX_PATH);
+	wchar_t *last_slash = wcsrchr(exe_path, L'\\');
+	++last_slash;
+	wcscpy(last_slash, L"data\\get_game_path.exe");
+	wcscpy(cmd_line,exe_path);
+
+	
+	if (speedup)
+	{
+		wcscat(cmd_line, L" start");
+	}
+	else
+	{
+		wcscat(cmd_line, L" stop");
+	}
+
+	StartProcess2(exe_path,cmd_line);
+
+
+	//LOGI("%ls:%ls",exe_path,cmd_line);
+	return true;
+
+}
+
+
+
+
+
+
+
 float control_manager_calculate_timescale(control_manager_t * ct)
 {
 	std::lock_guard < std::mutex > lock(ct->main_mutex);
 	float			timescale = 1.0;
+
+	static float o_timescale = 1.0;
+	int speedup = 0;
 
 	for (const control_t & control: ct->controls)
 	{
 		if (_get_control_state( &control) != CTRL_STATE_ACTIVE)
 			continue;
 
-		timescale			= _get_timescale_for_control(ct, &control);
+		timescale = _get_timescale_for_control(ct, &control);
+		speedup = control.slow_or_fast;
 	}
 
-	printf("timescale: %f\n", timescale);
+	//printf("timescale: %f\n", timescale);
+	if (timescale != o_timescale)
+	{
+		o_timescale = timescale;
+		play_sound(speedup);
+		if (speedup)
+		{
+			LOGI("speed up");
+		}
+		else
+		{
+			LOGI("speed down");
+		}
+	}
 
 	return timescale;
 }
+
 
 
 // int from_db_row_cb(void* _c, int num_cols) {
