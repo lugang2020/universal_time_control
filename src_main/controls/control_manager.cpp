@@ -384,8 +384,51 @@ void control_manager_thread(control_manager_t * ct)
 
 			}
 
+	
+			//update hold
+			bool hold_pressed = false;
+			for (const auto & key_down: keys_down)
+			{
+				auto matching_hold_controls = find_controls_matching_key(ct, key_down, CTRL_ACTIVATION_MODE_HOLD);
+				if (matching_hold_controls.size() > 0)
+				{
+					for (const control_t & ctrl: ct->controls)
+					{
+						control_t * 	c1	= (control_t *) &ctrl;
 
-			//update all control's status
+						if (std::find(matching_hold_controls.begin(), matching_hold_controls.end(), c1) != matching_hold_controls.end())
+						{
+							continue;
+						}
+
+						c1->is_held = false;
+						c1->is_toggled_on	= false;
+						c1->press_within_duration = false;
+					}
+				}
+
+				for (control_t * control: matching_hold_controls)
+				{
+					//LOGI("key pressed is held:%d",control->is_held);
+					hold_pressed = true;
+					if (control->press_within_duration) continue;
+
+					if (is_control_in_limit_mode(control))	continue;
+
+					if (control->current_energy_level < control->min_energy_to_activate)
+					{
+						continue;
+					}
+	
+					control->press_within_duration = true;
+					control->press_began = now;
+					control->is_held	= true;
+					have_changed		= true;
+				}
+			}
+
+			
+			//update all control's status after key press
 			for (const auto & control: ct->controls)
 			{
 				if (control.activation_mode == CTRL_ACTIVATION_MODE_PRESS)
@@ -404,7 +447,7 @@ void control_manager_thread(control_manager_t * ct)
 								((control_t *) &control)->cooldown_began = now;
 							}
 
-							have_changed		= true;
+							have_changed = true;
 						}
 					}
 
@@ -443,13 +486,21 @@ void control_manager_thread(control_manager_t * ct)
 				}
 
 				
-				if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD)
+				if (control.activation_mode == CTRL_ACTIVATION_MODE_HOLD )
 				{
-
-					if (delta >= 100)
+					//LOGI("%d:%d:%d",delta,hold_pressed,control.is_held);
+					if (delta > 100 && control.is_held && !hold_pressed)
 					{
+						//detected that key is not in hold state any more
 						((control_t *) &control)->is_held	= false;
 						((control_t *) &control)->press_within_duration = false;
+
+						if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN )
+						{
+							LOGI("Start cooldown");
+							((control_t *) &control)->is_in_cooldown = true;
+							((control_t *) &control)->cooldown_began = now;
+						}
 										
 						have_changed = true;
 					}
@@ -457,9 +508,6 @@ void control_manager_thread(control_manager_t * ct)
 				
 					if (control.limit_mode == CTRL_LIMITED_MODE_COOLDOWN)
 					{
-					
-						
-						//LOGI("duration:%f,press_within_duration:%d,is_hold:%d",key_press_inteval,control.press_within_duration,control.is_held);
 						if (control.press_within_duration)
 						{
 							
@@ -468,7 +516,7 @@ void control_manager_thread(control_manager_t * ct)
 							
 								if  ((now - control.press_began) >= control.duration)
 								{
-									LOGI("began:%f, duration:%f",(float)(now - control.press_began),(float)control.duration);		
+									//LOGI("began:%f, duration:%f",(float)(now - control.press_began),(float)control.duration);		
 									((control_t *) &control)->press_within_duration = false;
 									((control_t *) &control)->is_held	= false;
 
@@ -483,73 +531,17 @@ void control_manager_thread(control_manager_t * ct)
 							}
 						}
 					}
-					else if (control.limit_mode == CTRL_LIMITED_MODE_ENERGY)
-					{
-						/*if (control.current_energy_level <= 0)
-						{
-							((control_t *) &control)->press_within_duration = false;
-							((control_t *) &control)->is_held	= false;
-							((control_t *) &control)->current_energy_level = 0;
-							have_changed = true;
-						}*/
-					}
-					else
-					{
-						((control_t *) &control)->is_held	= false;
-						((control_t *) &control)->press_within_duration = false;
-						have_changed = true;
-					}
 					
 				}
 
 				have_changed = control_update_limit_status((control_t *) &control, now, now_ms, delta, delta_secs);
 			}
 
-			//update hold
-			for (const auto & key_down: keys_down)
-			{
-				auto matching_hold_controls = find_controls_matching_key(ct, key_down, CTRL_ACTIVATION_MODE_HOLD);
-				if (matching_hold_controls.size() > 0)
-				{
-					for (const control_t & ctrl: ct->controls)
-					{
-						control_t * 	c1	= (control_t *) &ctrl;
-
-						if (std::find(matching_hold_controls.begin(), matching_hold_controls.end(), c1) != matching_hold_controls.end())
-						{
-							continue;
-						}
-
-						c1->is_held	= false;
-						c1->is_toggled_on	= false;
-						c1->press_within_duration = false;
-					}
-				}
-
-				for (control_t * control: matching_hold_controls)
-				{
-					//LOGI("hold key begin");
-					//control->last_key_press = now;
-					if (control->press_within_duration)	continue;
-
-					if (is_control_in_limit_mode(control))	continue;
-
-					if (control->current_energy_level < control->min_energy_to_activate)
-					{
-						continue;
-					}
-
-					control->press_within_duration = true;
-					control->press_began = now;
-
-					//LOGI("hold key detected");
-					
-					control->is_held	= true;
-					have_changed		= true;
-				}
-			}
+			
 
 		} //Key handling end
+
+		
 
 		if (have_changed)
 		{
