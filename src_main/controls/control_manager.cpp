@@ -740,8 +740,10 @@ float control_manager_calculate_timescale(control_manager_t * ct)
 		speedup = control.slow_or_fast;
 	}
 
-	//printf("timescale: %f\n", timescale);
-	if (timescale != o_timescale)
+	LOGI("timescale: %f\n", timescale);
+
+	
+	if ( (timescale != o_timescale) && g_sound_effect)
 	{
 		o_timescale = timescale;
 		play_sound(speedup);

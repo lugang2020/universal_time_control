@@ -426,7 +426,7 @@ static void _start_managing_new_processes(
 
 static void _update_injected_timescales(process_monitor_t* p) {
 	for (auto& managed_exe : p->managed_processes) {
-		LOGI("Managed: (PID %lu) %s\n", managed_exe.pid, managed_exe.path);
+		//LOGI("Managed: (PID %lu) %s\n", managed_exe.pid, managed_exe.path);
 
 		timecontrol_ipc_cmd_t command;
 		command.cmd_type = UTC_IPC_CMD_SET_TIMESCALE;
