@@ -11,6 +11,7 @@ create table if not exists profile (
 );
 
 create table if not exists setting (
+	id          integer primary key,
 	sound_effect integer
 );
 
@@ -39,9 +40,9 @@ create table if not exists game_exe (
 
 
 
-insert or ignore into profile (id, name) values (1, "Default",1);
+insert or ignore into profile (id, name) values (1, "Default");
 
-insert or ignore into setting (sound_effect) values (1);
+insert or ignore into setting (id, sound_effect) values (1,1);
 
 -- insert or ignore into game (id, steam_appid, name, allowed, enabled, profile_id) values (1, 123, "Test Steam Game", 1, 1, 1);
 insert or ignore into game (id, steam_appid, name, allowed, enabled, profile_id) values (2, -1, "Test non-Steam game", 1, 0, 1);

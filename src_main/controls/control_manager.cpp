@@ -94,9 +94,14 @@ struct _control_manager
 
 	int64_t 		last_time;
 
-	int		sound_effect;
+	
 
 };
+
+
+
+int		g_sound_effect = 1;
+
 
 
 static std::vector < control_t * > find_controls_matching_key(control_manager_t * ct, const key_t & key, 
@@ -788,14 +793,14 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 
 
 
-  static void load_setting_from_db(sqlite3 * db,control_manager_t *cm)
+  static void load_setting_from_db(sqlite3 * db)
   {
 	  sqlite3_stmt *  get_from_db_stmt;
 	  int			  prepare_result = sqlite3_prepare_v2(db, "select * from setting", -1, &get_from_db_stmt, NULL);
   
 	  if (prepare_result != SQLITE_OK)
 	  {
-		  const char *	  err = sqlite3_errmsg(db);
+		  const char *err = sqlite3_errmsg(db);
   
 		  printf("sqlite err: %s\n", err);
 		  abort();
@@ -809,7 +814,8 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 		  abort();
 	  }
   
-	  cm->sound_effect = sqlite3_column_int(get_from_db_stmt, 0);
+	  g_sound_effect = sqlite3_column_int(get_from_db_stmt, 1);
+	  LOGI("g_sound_effect:%d",g_sound_effect);
   
 	  sqlite3_clear_bindings(get_from_db_stmt);
 	  sqlite3_finalize(get_from_db_stmt);
@@ -823,7 +829,7 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 	  sqlite3 *		db	= db_owner_lock_and_get_db(cm->db_owner);
   
 	  sqlite3_stmt *  update_stmt;
-	  int			  prepare_result = sqlite3_prepare_v2(db, "update setting set sound_effect = ?", -1, &update_stmt, NULL);
+	  int			  prepare_result = sqlite3_prepare_v2(db, "update setting set sound_effect = ? where id=1", -1, &update_stmt, NULL);
   
 	  if (prepare_result != SQLITE_OK)
 	  {
@@ -833,8 +839,8 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 		  abort();
 	  }
   
-	  // sqlite3_bind_int(update_stmt, 1, id);
-	  sqlite3_bind_int(update_stmt, 0, cm->sound_effect);
+	  LOGI("g_sound_effect:%d",g_sound_effect);
+	  sqlite3_bind_int(update_stmt, 1, g_sound_effect);
 	   
 	  if (sqlite3_step(update_stmt) != SQLITE_DONE)
 	  {
@@ -848,78 +854,13 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 	  sqlite3_clear_bindings(update_stmt);
 	  sqlite3_finalize(update_stmt);
 
+	  //load_setting_from_db(db);
+
 	  db_owner_surrender_db_and_unlock(cm->db_owner);
   }
   
-  
-  
-
-
-  
-  
-  // reads control.id
-  // writes control.<everything else>
-  static void load_specific_control_from_db(sqlite3 * db, control_t & control)
-  {
-	  sqlite3_stmt *  get_from_db_stmt;
-	  int			  prepare_result = sqlite3_prepare_v2(db, "select * from control where id = ?", -1, 
-		  & 		  get_from_db_stmt, NULL);
-  
-	  sqlite3_bind_int(get_from_db_stmt, 1, control.id);
-  
-	  if (prepare_result != SQLITE_OK)
-	  {
-		  const char *	  err = sqlite3_errmsg(db);
-  
-		  printf("sqlite err: %s\n", err);
-		  abort();
-	  }
-  
-	  if (sqlite3_step(get_from_db_stmt) != SQLITE_ROW)
-	  {
-		  const char *	  err = sqlite3_errmsg(db);
-  
-		  printf("sqlite load control err: %s\n", err);
-		  abort();
-	  }
-  
-	  load_control_from_db(get_from_db_stmt, control, false);
-  
-	  sqlite3_clear_bindings(get_from_db_stmt);
-	  sqlite3_finalize(get_from_db_stmt);
-  }
-  
-  
-  static int insert_new_control(sqlite3 * db)
-  {
-	  sqlite3_stmt *  insert_stmt;
-	  int			  prepare_result = sqlite3_prepare_v2(db, "insert into control default values;", -1, &insert_stmt, 
-		  NULL);
-  
-	  if (prepare_result != SQLITE_OK)
-	  {
-		  const char *	  err = sqlite3_errmsg(db);
-  
-		  printf("sqlite err: %s\n", err);
-		  abort();
-	  }
-  
-	  if (sqlite3_step(insert_stmt) != SQLITE_DONE)
-	  {
-		  const char *	  err = sqlite3_errmsg(db);
-  
-		  printf("sqlite insert control err: %s\n", err);
-		  abort();
-	  }
-  
-	  sqlite3_reset(insert_stmt);
-	  sqlite3_finalize(insert_stmt);
-	  return (int)
-	  sqlite3_last_insert_rowid(db);
-  }
-
-
-
+   
+ 
 #include <string.h>
 
 
@@ -1151,7 +1092,7 @@ control_manager_t * control_manager_create(db_owner_t * _db)
 	sqlite3_reset(get_from_db_stmt);
 	sqlite3_finalize(get_from_db_stmt);
 
-	load_setting_from_db(db,c);
+	load_setting_from_db(db);
 
 	db_owner_surrender_db_and_unlock(_db);
 

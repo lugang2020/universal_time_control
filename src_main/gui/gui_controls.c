@@ -625,3 +625,10 @@ void gui_controls_cleanup(gui_controls_data_t* data)
 	free(data);
 }
 
+
+void update_setting(gui_controls_data_t* data)
+{
+	update_setting_in_db(data->cm);
+}
+
+

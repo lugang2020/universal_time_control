@@ -224,10 +224,12 @@ void gui_mainloop_draw(gui_mainloop_data_t* data)
 			igAlignTextToFramePadding();
 			igText("Remove all configured games and controls");
 
-			igCheckbox("Sound effect", &data->controls_data.cm->sound_effect);
-
-			void update_setting_in_db( control_manager_t *cm);
-			update_setting_in_db(data->controls_data.cm);
+			extern int g_sound_effect;
+			if (igCheckbox("Sound effect", (bool*)&g_sound_effect))
+			{
+				LOGI("g_sound_effect:%d",g_sound_effect);
+				update_setting(data->controls_data);
+			}
 
 			igEndChild();
 			igEndTabItem();
