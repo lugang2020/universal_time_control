@@ -75,24 +75,27 @@ int _get_control_state( const control_t * cont);
 
 struct _control_manager
 {
-std::thread thread;
-std::mutex main_mutex;
-std::mutex update_and_delete_mutex;
-db_owner_t *	db_owner;
+	std::thread thread;
+	std::mutex main_mutex;
+	std::mutex update_and_delete_mutex;
+	db_owner_t *	db_owner;
 
-std::vector < control_t > to_modify;
-std::vector < control_t > to_delete;
-bool			should_insert;
+	std::vector < control_t > to_modify;
+	std::vector < control_t > to_delete;
+	bool			should_insert;
 
-set_of_controls controls;
+	set_of_controls controls;
 
-bool			should_quit;
+	bool			should_quit;
 
 
-std::mutex controls_changed_mutex;
-std::condition_variable controls_changed;
+	std::mutex controls_changed_mutex;
+	std::condition_variable controls_changed;
 
-int64_t 		last_time;
+	int64_t 		last_time;
+
+	int		sound_effect;
+
 };
 
 
@@ -782,6 +785,115 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
                                ;
 		 )""";
 
+
+
+static const char * GET_SETTING_QUERY = R"""(
+				 select * from setting;
+				  )""";
+		 
+		 
+		 static const char * UPDATE_SETTING_QUERY = R"""(
+				 update setting set
+				 sound_effect = ?;
+				  )""";
+
+
+  static void load_setting_from_db(sqlite3_stmt * get_from_db_stmt, control_t & control, bool include_id = true)
+  {
+	  sqlite3_stmt *  get_from_db_stmt;
+	  int			  prepare_result = sqlite3_prepare_v2(db, "select * from setting", -1, &get_from_db_stmt, NULL);
+  
+	  sqlite3_bind_int(get_from_db_stmt, 1, control.id);
+  
+	  if (prepare_result != SQLITE_OK)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite err: %s\n", err);
+		  abort();
+	  }
+  
+	  if (sqlite3_step(get_from_db_stmt) != SQLITE_ROW)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite load control err: %s\n", err);
+		  abort();
+	  }
+  
+	  load_control_from_db(get_from_db_stmt, control, false);
+  
+	  sqlite3_clear_bindings(get_from_db_stmt);
+	  sqlite3_finalize(get_from_db_stmt);
+  
+  
+  
+  }
+  
+  
+  // reads control.id
+  // writes control.<everything else>
+  static void load_specific_control_from_db(sqlite3 * db, control_t & control)
+  {
+	  sqlite3_stmt *  get_from_db_stmt;
+	  int			  prepare_result = sqlite3_prepare_v2(db, "select * from control where id = ?", -1, 
+		  & 		  get_from_db_stmt, NULL);
+  
+	  sqlite3_bind_int(get_from_db_stmt, 1, control.id);
+  
+	  if (prepare_result != SQLITE_OK)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite err: %s\n", err);
+		  abort();
+	  }
+  
+	  if (sqlite3_step(get_from_db_stmt) != SQLITE_ROW)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite load control err: %s\n", err);
+		  abort();
+	  }
+  
+	  load_control_from_db(get_from_db_stmt, control, false);
+  
+	  sqlite3_clear_bindings(get_from_db_stmt);
+	  sqlite3_finalize(get_from_db_stmt);
+  }
+  
+  
+  static int insert_new_control(sqlite3 * db)
+  {
+	  sqlite3_stmt *  insert_stmt;
+	  int			  prepare_result = sqlite3_prepare_v2(db, "insert into control default values;", -1, &insert_stmt, 
+		  NULL);
+  
+	  if (prepare_result != SQLITE_OK)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite err: %s\n", err);
+		  abort();
+	  }
+  
+	  if (sqlite3_step(insert_stmt) != SQLITE_DONE)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite insert control err: %s\n", err);
+		  abort();
+	  }
+  
+	  sqlite3_reset(insert_stmt);
+	  sqlite3_finalize(insert_stmt);
+	  return (int)
+	  sqlite3_last_insert_rowid(db);
+  }
+
+
+
 #include <string.h>
 
 
@@ -962,6 +1074,10 @@ static void update_control_in_db(sqlite3 * db, const control_t & control)
 	sqlite3_clear_bindings(update_stmt);
 	sqlite3_finalize(update_stmt);
 }
+
+
+
+
 
 
 

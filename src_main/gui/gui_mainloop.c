@@ -224,6 +224,8 @@ void gui_mainloop_draw(gui_mainloop_data_t* data)
 			igAlignTextToFramePadding();
 			igText("Remove all configured games and controls");
 
+			igCheckbox("Sound effect", &game->enabled);
+
 			igEndChild();
 			igEndTabItem();
 		}
