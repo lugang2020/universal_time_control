@@ -787,23 +787,11 @@ static const char * UPDATE_CONTROLS_QUERY = R"""(
 
 
 
-static const char * GET_SETTING_QUERY = R"""(
-				 select * from setting;
-				  )""";
-		 
-		 
-		 static const char * UPDATE_SETTING_QUERY = R"""(
-				 update setting set
-				 sound_effect = ?;
-				  )""";
 
-
-  static void load_setting_from_db(sqlite3_stmt * get_from_db_stmt, control_t & control, bool include_id = true)
+  static void load_setting_from_db(sqlite3 * db,control_manager_t *cm)
   {
 	  sqlite3_stmt *  get_from_db_stmt;
 	  int			  prepare_result = sqlite3_prepare_v2(db, "select * from setting", -1, &get_from_db_stmt, NULL);
-  
-	  sqlite3_bind_int(get_from_db_stmt, 1, control.id);
   
 	  if (prepare_result != SQLITE_OK)
 	  {
@@ -821,14 +809,52 @@ static const char * GET_SETTING_QUERY = R"""(
 		  abort();
 	  }
   
-	  load_control_from_db(get_from_db_stmt, control, false);
+	  cm->sound_effect = sqlite3_column_int(get_from_db_stmt, 0);
   
 	  sqlite3_clear_bindings(get_from_db_stmt);
 	  sqlite3_finalize(get_from_db_stmt);
   
   
-  
   }
+
+
+  void update_setting_in_db( control_manager_t *cm)
+  {
+	  sqlite3 *		db	= db_owner_lock_and_get_db(cm->db_owner);
+  
+	  sqlite3_stmt *  update_stmt;
+	  int			  prepare_result = sqlite3_prepare_v2(db, "update setting set sound_effect = ?", -1, &update_stmt, NULL);
+  
+	  if (prepare_result != SQLITE_OK)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite err: %s\n", err);
+		  abort();
+	  }
+  
+	  // sqlite3_bind_int(update_stmt, 1, id);
+	  sqlite3_bind_int(update_stmt, 0, cm->sound_effect);
+	   
+	  if (sqlite3_step(update_stmt) != SQLITE_DONE)
+	  {
+		  const char *	  err = sqlite3_errmsg(db);
+  
+		  printf("sqlite update control err: %s\n", err);
+		  abort();
+	  }
+  
+	  sqlite3_reset(update_stmt);
+	  sqlite3_clear_bindings(update_stmt);
+	  sqlite3_finalize(update_stmt);
+
+	  db_owner_surrender_db_and_unlock(cm->db_owner);
+  }
+  
+  
+  
+
+
   
   
   // reads control.id
@@ -1124,6 +1150,8 @@ control_manager_t * control_manager_create(db_owner_t * _db)
 
 	sqlite3_reset(get_from_db_stmt);
 	sqlite3_finalize(get_from_db_stmt);
+
+	load_setting_from_db(db,c);
 
 	db_owner_surrender_db_and_unlock(_db);
 

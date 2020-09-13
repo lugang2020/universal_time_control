@@ -69,5 +69,7 @@ void                 control_manager_que_control_insertion(control_manager_t* c)
 float                 control_manager_calculate_timescale(control_manager_t* c);
 void                 control_manager_sleep(control_manager_t* c);
 
+void update_setting_in_db(control_manager_t *cm);
+
 
 SEPPLES_GUARD_END
