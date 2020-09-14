@@ -130,7 +130,8 @@ static void _codeduplicationftw_util_wide_to_utf8(wchar_t * wide, size_t wide_le
 	utf8[utf8_result_len] = '\0';
 }
 
-typedef int (*KeyPaserFunc)(PRAWINPUT, LONG&, LONG&, LONG&, LONG&, LONG&, int&, bool*);
+
+typedef int(*KeyPaserFunc) (PRAWINPUT, LONG &, LONG &, LONG &, LONG &, LONG &, int &, bool *);
 
 //typedef int(*KeyPaserFunc) (PRAWINPUT);
 KeyPaserFunc	key_parser = NULL;
@@ -146,7 +147,7 @@ int init_ext_lib()
 	{
 		printf("win_ext_for_tc.dll not found\n");
 	}
-	
+
 	key_parser			= (KeyPaserFunc)
 	GetProcAddress(hInstLibrary, "parse_game_controller_key");
 
@@ -158,8 +159,6 @@ int init_ext_lib()
 
 
 	//FreeLibrary(hInstLibrary);
-	
-
 	return 0;
 }
 
@@ -173,8 +172,8 @@ int init_ext_lib()
 #include "../../third_party/mingw-std-threads/mingw.mutex.h"
 #include "../../third_party/mingw-std-threads/mingw.condition_variable.h"
 
-static std::unordered_set <key_t> keys_down;
-static std::unordered_set <key_t> keys_pressed;
+static std::unordered_set < key_t > keys_down;
+static std::unordered_set < key_t > keys_pressed;
 
 static bool 	is_key_set_mode = false;
 static bool 	key_set_has_value = false;
@@ -198,7 +197,7 @@ std::mutex * gui_impl_get_keys_mutex()
 
 void gui_impl_enter_get_key_mode()
 {
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 
 	// key_set.reset();
 	key_set_has_value	= false;
@@ -209,7 +208,7 @@ void gui_impl_enter_get_key_mode()
 
 void gui_impl_leave_get_key_mode()
 {
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 
 	// key_set.reset();
 	key_set_has_value	= false;
@@ -219,14 +218,14 @@ void gui_impl_leave_get_key_mode()
 
 bool gui_impl_is_get_key_mode()
 {
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 	return is_key_set_mode;
 }
 
 
 bool gui_impl_get_set_key(key_t * out)
 {
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 
 	if (!is_key_set_mode || !key_set_has_value)
 	{
@@ -245,7 +244,7 @@ bool gui_impl_get_set_key(key_t * out)
 
 GUI_IMPL_API void gui_impl_get_keys_data(set_of_keys * out_keys_down, set_of_keys * out_keys_just_pressed)
 {
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 
 	*out_keys_down		= keys_down;
 	*out_keys_just_pressed = keys_pressed;
@@ -273,9 +272,11 @@ static void _handle_raw_input(LPARAM lParam)
 
 
 
-	RAWINPUT *		raw = (RAWINPUT *)data;
-	//printf("_handle_raw_input:key pressed:%d\n", raw->header.dwType);
+	RAWINPUT *		raw = (RAWINPUT *)
 
+	data;
+
+	//printf("_handle_raw_input:key pressed:%d\n", raw->header.dwType);
 	if (raw->header.dwType == RIM_TYPEHID)
 	{
 		if (key_parser == NULL)
@@ -285,338 +286,388 @@ static void _handle_raw_input(LPARAM lParam)
 		}
 
 
-		LONG lAxisX, lAxisY,lAxisZ,lAxisRz, lHat;
-		int iNumberOfButtons = 0;
-		bool bBtnStates[128];
+		LONG			lAxisX, lAxisY, lAxisZ, lAxisRz, lHat;
+		int 			iNumberOfButtons = 0;
+		bool			bBtnStates[128];
 
 		//typedef int (*KeyPaserFunc)(PRAWINPUT, LONG&, LONG&, LONG&, LONG&, LONG&, int&, bool*);
+		int 			ret = key_parser(raw, lAxisX, lAxisY, lAxisZ, lAxisRz, lHat, iNumberOfButtons, bBtnStates);
 
-		int ret = key_parser(raw,lAxisX, lAxisY,lAxisZ,lAxisRz, lHat,iNumberOfButtons,bBtnStates);
 		if (ret != 0)
 		{
-			printf("key_parser failed:%d\n",ret);
+			printf("key_parser failed:%d\n", ret);
 			return;
 		}
 
-		printf("lAxisX:%d lAxisY:%d lAxisZ:%d lAxisRz:%d lHat:%d iNumberOfButtons:%d\n",lAxisX, lAxisY,lAxisZ,lAxisRz, lHat,iNumberOfButtons);
-		//printf("Pressed:");
-		int pressed = 0;
+		printf("lAxisX:%ld lAxisY:%ld lAxisZ:%ld lAxisRz:%ld lHat:%ld iNumberOfButtons:%d\n", lAxisX, lAxisY, lAxisZ,
+			 lAxisRz, lHat, iNumberOfButtons);
+
+		printf("Pressed:");
+		int 			pressed = 0;
+
 		for (int i = 0; i < iNumberOfButtons; ++i)
 		{
-			//printf("%d ",bBtnStates[i]);
-			pressed = i;
-			
+			printf("%d ",bBtnStates[i]);
+			if (bBtnStates[i])
+			{
+				pressed 			= i + 1;
+			}
+
+		}
+		printf("\n");
+
+		if (!pressed)
+		{
+			//discard non button events
+			return;
 		}
 
-		
-		//printf("\n");
 
+		//printf("\n");
 
 		/* output of my xbox game controller Y/X/B/A button
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 0 0 1 0 0 0 0 0 0
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 0 0 0 0 0 0 0 0 0
-		
-		
+
+
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 0 1 0 0 0 0 0 0 0
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 0 0 0 0 0 0 0 0 0
-		
-		
+
+
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 1 0 0 0 0 0 0 0 0
 		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
 		Pressed:0 0 0 0 0 0 0 0 0 0
 		*/
+		key_t			key;
 
-		
+		memset(&key, 0, sizeof(key));
+		key.v_code			= '0' + pressed;
 
-		
+		//key.scan_code		= kb.MakeCode;
+		sprintf(key.desc_utf8,"%c", key.v_code);
+
+		printf("%d %s %d\n", key.v_code, key.desc_utf8,pressed);
+
+		/*key.ctrl			= any_ctrl;
+		key.alt 			= alt;
+		key.shift			= shift;*/
+		{
+			std::lock_guard < std::mutex > lock(keys_lock);
+
+			auto			does_set_contain_key =[] (const set_of_keys & set, const key_t & key)->bool
+			{
+				return set.find(key) != set.end();
+			};
+
+			if (is_key_set_mode)
+			{
+				if (!key_set_has_value)
+				{
+					key_set_has_value	= true;
+					memcpy(&key_set, &key, sizeof(key_t));
+
+					// is_key_set_mode = false;
+				}
+
+
+			}
+			else 
+			{
+				if (!does_set_contain_key(keys_down, key))
+				{
+					keys_pressed.insert(key);
+					Sleep(50);
+					keys_pressed.erase(key);
+					keys_down.insert(key);
+					Sleep(50);
+					keys_down.erase(key);
+				}
+
+			}
+		}
+
+		keys_cv.notify_all();
+
 		return;
 	}
 
-	if (raw->header.dwType == RIM_TYPEKEYBOARD)
+	//printf("keyboard %d\n", raw->header.dwType);
+
+	if (raw->header.dwType != RIM_TYPEKEYBOARD)
 	{
+		return;
+	}
 
-		RAWKEYBOARD 	kb	= raw->data.keyboard;
 
 
-		static unsigned char dummyKeyState[256] =
+	RAWKEYBOARD 	kb	= raw->data.keyboard;
+
+
+	static unsigned char dummyKeyState[256] =
+	{
+		0
+	};
+	static unsigned char keyState[256] =
+	{
+		0
+	};
+
+	{ // update our keystate
+
+		// if you don't care about getting the unicode translated thing later you might choose to store it differnetly.
+		bool			e0	= kb.Flags & RI_KEY_E0;
+
+		// bool e1 = kb.Flags & RI_KEY_E1;
+		// these are unasigned but not reserved as of now.
+		// this is bad but, you know, we'll fix it if it ever breaks.
+#define 		VK_LRETURN				0x9E
+#define 		VK_RRETURN				0x9F
+
+#define 		UPDATE_KEY_STATE(key)	do{keyState[key] = (kb.Flags & 1) ? 0 : 0xff;}while(0)
+
+		// note: we set all bits in the byte if the key is down. 
+		// This is becasue windows expects it to be in the high_order_bit (when using it for converting to unicode for example)
+		// and I like it to be in the low_order_bit,  
+		if (kb.VKey == VK_CONTROL)
 		{
-			0
-		};
-		static unsigned char keyState[256] =
-		{
-			0
-		};
-
-		{ // update our keystate
-
-			// if you don't care about getting the unicode translated thing later you might choose to store it differnetly.
-			bool			e0	= kb.Flags & RI_KEY_E0;
-
-			// bool e1 = kb.Flags & RI_KEY_E1;
-			// these are unasigned but not reserved as of now.
-			// this is bad but, you know, we'll fix it if it ever breaks.
-#define 			VK_LRETURN				0x9E
-#define 			VK_RRETURN				0x9F
-
-#define 			UPDATE_KEY_STATE(key)	do{keyState[key] = (kb.Flags & 1) ? 0 : 0xff;}while(0)
-
-			// note: we set all bits in the byte if the key is down. 
-			// This is becasue windows expects it to be in the high_order_bit (when using it for converting to unicode for example)
-			// and I like it to be in the low_order_bit,  
-			if (kb.VKey == VK_CONTROL)
-			{
-				if (e0)
-					UPDATE_KEY_STATE(VK_RCONTROL);
-				else 
-					UPDATE_KEY_STATE(VK_LCONTROL);
-
-				keyState[VK_CONTROL] = keyState[VK_RCONTROL] | keyState[VK_LCONTROL];
-			}
-			else if (kb.VKey == VK_SHIFT)
-			{
-				// because why should any api be consistant lol
-				// (because we get different scancodes for l/r-shift but not for l/r ctrl etc... but still)
-				UPDATE_KEY_STATE(MapVirtualKey(kb.MakeCode, MAPVK_VSC_TO_VK_EX));
-				keyState[VK_SHIFT]	= keyState[VK_LSHIFT] | keyState[VK_RSHIFT];
-
-				// do{dummyKeyState[key] = (kb.Flags & 1) ? 0 : 0xff;}while(0)
-				// dummyKeyState[VK_SHIFT] = dummyKeyState[VK_LSHIFT] | dummyKeyState[VK_RSHIFT];
-			}
-			else if (kb.VKey == VK_MENU)
-			{
-				if (e0)
-					UPDATE_KEY_STATE(VK_LMENU);
-				else 
-					UPDATE_KEY_STATE(VK_RMENU);
-
-				keyState[VK_MENU]	= keyState[VK_RMENU] | keyState[VK_LMENU];
-			}
-			else if (kb.VKey == VK_RETURN)
-			{
-				if (e0)
-					UPDATE_KEY_STATE(VK_RRETURN);
-				else 
-					UPDATE_KEY_STATE(VK_LRETURN);
-
-				keyState[VK_RETURN] = keyState[VK_RRETURN] | keyState[VK_LRETURN];
-			}
+			if (e0)
+				UPDATE_KEY_STATE(VK_RCONTROL);
 			else 
-			{
-				UPDATE_KEY_STATE(kb.VKey);
-			}
+				UPDATE_KEY_STATE(VK_LCONTROL);
+
+			keyState[VK_CONTROL] = keyState[VK_RCONTROL] | keyState[VK_LCONTROL];
+		}
+		else if (kb.VKey == VK_SHIFT)
+		{
+			// because why should any api be consistant lol
+			// (because we get different scancodes for l/r-shift but not for l/r ctrl etc... but still)
+			UPDATE_KEY_STATE(MapVirtualKey(kb.MakeCode, MAPVK_VSC_TO_VK_EX));
+			keyState[VK_SHIFT]	= keyState[VK_LSHIFT] | keyState[VK_RSHIFT];
+
+			// do{dummyKeyState[key] = (kb.Flags & 1) ? 0 : 0xff;}while(0)
+			// dummyKeyState[VK_SHIFT] = dummyKeyState[VK_LSHIFT] | dummyKeyState[VK_RSHIFT];
+		}
+		else if (kb.VKey == VK_MENU)
+		{
+			if (e0)
+				UPDATE_KEY_STATE(VK_LMENU);
+			else 
+				UPDATE_KEY_STATE(VK_RMENU);
+
+			keyState[VK_MENU]	= keyState[VK_RMENU] | keyState[VK_LMENU];
+		}
+		else if (kb.VKey == VK_RETURN)
+		{
+			if (e0)
+				UPDATE_KEY_STATE(VK_RRETURN);
+			else 
+				UPDATE_KEY_STATE(VK_LRETURN);
+
+			keyState[VK_RETURN] = keyState[VK_RRETURN] | keyState[VK_LRETURN];
+		}
+		else 
+		{
+			UPDATE_KEY_STATE(kb.VKey);
+		}
 
 #undef UPDATE_KEY_STATE
-		}
+	}
 
 
-		// char buffer[4096];
-		// sprintf(buffer, "Kbd: make=%04x Flags:%04x Reserved:%04x ExtraInformation:%08x, msg=%04x VK=%04x \n",
-		//		 (unsigned int)raw->data.keyboard.MakeCode, 
-		//		 (unsigned int)raw->data.keyboard.Flags, 
-		//		 (unsigned int)raw->data.keyboard.Reserved, 
-		//		 (unsigned int)raw->data.keyboard.ExtraInformation, 
-		//		 (unsigned int)raw->data.keyboard.Message, 
-		//		 (unsigned int)raw->data.keyboard.VKey);
-		// printf("%s\n", buffer);
-		bool			is_down = ! (kb.Flags & 0x1);
+	// char buffer[4096];
+	// sprintf(buffer, "Kbd: make=%04x Flags:%04x Reserved:%04x ExtraInformation:%08x, msg=%04x VK=%04x \n",
+	//		 (unsigned int)raw->data.keyboard.MakeCode, 
+	//		 (unsigned int)raw->data.keyboard.Flags, 
+	//		 (unsigned int)raw->data.keyboard.Reserved, 
+	//		 (unsigned int)raw->data.keyboard.ExtraInformation, 
+	//		 (unsigned int)raw->data.keyboard.Message, 
+	//		 (unsigned int)raw->data.keyboard.VKey);
+	// printf("%s\n", buffer);
+	bool			is_down = ! (kb.Flags & 0x1);
 
 
-		//if(1)
-		{
-			// char *buff=0;
-			// int utf8_len = 0;
-			// get unicode.
-			wchar_t 		utf16_buffer[32];
+	// char *buff=0;
+	// int utf8_len = 0;
+	// get unicode.
+	wchar_t 		utf16_buffer[32];
 
-			//simulating altgr, assumes all leftalts is algr
-			// which seem to work since ctrl is ignored on US versions of ToUnicode. Bad way of doing it, Not sure how to detect if left alt is altgr though.
-			unsigned char	ctrl = keyState[VK_CONTROL];
+	//simulating altgr, assumes all leftalts is algr
+	// which seem to work since ctrl is ignored on US versions of ToUnicode. Bad way of doing it, Not sure how to detect if left alt is altgr though.
+	unsigned char	ctrl = keyState[VK_CONTROL];
 
-			keyState[VK_CONTROL] |= keyState[VK_RMENU];
+	keyState[VK_CONTROL] |= keyState[VK_RMENU];
 
-			const wchar_t * desc = NULL;
+	const wchar_t * desc = NULL;
 
-			switch (kb.VKey)
-			{
+	switch (kb.VKey)
+	{
 #include "gui_impl_windx9_vkeynames.inc.cpp"
-			}
+	}
 
-			if (desc)
+	if (desc)
+	{
+		wcscpy(utf16_buffer, desc);
+	}
+	else 
+	{
+		int 			bytes_written = ToUnicode(kb.VKey, kb.MakeCode, dummyKeyState, utf16_buffer, 
+			sizeof(utf16_buffer) / sizeof(utf16_buffer[0]), 0);
+
+		if (bytes_written < 1)
+		{
+			wcscpy(utf16_buffer, L"<??" L"?>"); 	// avoid trigraph
+		}
+	}
+
+
+	keyState[VK_CONTROL] = ctrl;
+
+	bool			shift = keyState[VK_LSHIFT] || keyState[VK_RSHIFT];
+	bool			any_ctrl = keyState[VK_LCONTROL] || keyState[VK_RCONTROL];
+	bool			alt = keyState[VK_LMENU] || keyState[VK_RMENU];
+
+	// not interested if only modifiers...
+	if ((kb.VKey == VK_CONTROL) || (kb.VKey == VK_SHIFT) || (kb.VKey == VK_MENU))
+	{
+		// except that on release we do want to clear any other keys that are marked as down.
+		if (!is_down)
+		{
+			for (auto it = keys_down.begin(); it != keys_down.end(); )
 			{
-				wcscpy(utf16_buffer, desc);
-			}
-			else 
-			{
-				int 			bytes_written = ToUnicode(kb.VKey, kb.MakeCode, dummyKeyState, utf16_buffer,
-					 sizeof(utf16_buffer) / sizeof(utf16_buffer[0]), 0);
 
-				if (bytes_written < 1)
+				bool			should_delete = ((kb.VKey == VK_CONTROL) && (it->ctrl)) || ((kb.VKey == VK_SHIFT) &&
+					 (it->shift)) || ((kb.VKey == VK_MENU) && (it->alt));
+
+				if (should_delete)
 				{
-					wcscpy(utf16_buffer, L"<??" L"?>"); // avoid trigraph
-				}
-			}
-
-
-			keyState[VK_CONTROL] = ctrl;
-
-			bool			shift = keyState[VK_LSHIFT] || keyState[VK_RSHIFT];
-			bool			any_ctrl = keyState[VK_LCONTROL] || keyState[VK_RCONTROL];
-			bool			alt = keyState[VK_LMENU] || keyState[VK_RMENU];
-
-			// not interested if only modifiers...
-			if ((kb.VKey == VK_CONTROL) || (kb.VKey == VK_SHIFT) || (kb.VKey == VK_MENU))
-			{
-				// except that on release we do want to clear any other keys that are marked as down.
-				if (!is_down)
-				{
-					for (auto it = keys_down.begin(); it != keys_down.end(); )
-					{
-
-						bool			should_delete = ((kb.VKey == VK_CONTROL) && (it->ctrl)) ||
-							 ((kb.VKey == VK_SHIFT) && (it->shift)) || ((kb.VKey == VK_MENU) && (it->alt));
-
-						if (should_delete)
-						{
-							keys_down.erase(it++);
-						}
-						else 
-						{
-							++it;
-						}
-					}
-				}
-
-				return;
-			}
-			else 
-			{
-				// todo this makes some of the handling below obsolete...
-				if (!is_down)
-				{
-					for (auto it = keys_down.begin(); it != keys_down.end(); )
-					{
-
-						bool			should_delete = (it->v_code == kb.VKey) && (it->scan_code == kb.MakeCode);
-
-						if (should_delete)
-						{
-							keys_down.erase(it++);
-						}
-						else 
-						{
-							++it;
-						}
-					}
-				}
-			}
-
-			wchar_t 		key_fmt_buffer[64];
-
-			key_fmt_buffer[0]	= 0;
-
-			if (any_ctrl)
-				wcscat(key_fmt_buffer, L"CTRL+");
-
-			if (alt)
-				wcscat(key_fmt_buffer, L"ALT+");
-
-			if (shift)
-				wcscat(key_fmt_buffer, L"SHIFT+");
-
-			wcscat(key_fmt_buffer, utf16_buffer);
-			CharUpperW(key_fmt_buffer);
-
-			// printf("%ls\n", key_fmt_buffer);
-			char			utf8_buffer[128];
-
-			_codeduplicationftw_util_wide_to_utf8(key_fmt_buffer, wcslen(key_fmt_buffer), utf8_buffer,
-				 sizeof(utf8_buffer));
-
-			// printf("%s: %s\n", (is_down ? "D" : "U"), utf8_buffer);
-			// typedef struct {
-			//	uint32_t v_code    PACKED;
-			//	uint32_t scan_code PACKED;
-			//	str31	 desc_utf8 PACKED;
-			//	bool	 ctrl	   PACKED;
-			//	bool	 alt	   PACKED;
-			//	bool	 shift	   PACKED;
-			// } PACKED key_t;
-			key_t			key;
-
-			memset(&key, 0, sizeof(key));
-			key.v_code			= kb.VKey;
-			key.scan_code		= kb.MakeCode;
-			strncpy(key.desc_utf8, utf8_buffer, 31);
-			key.ctrl			= any_ctrl;
-			key.alt 			= alt;
-			key.shift			= shift;
-
-			{
-				std::lock_guard <std::mutex> lock(keys_lock);
-
-				auto			does_set_contain_key =[] (const set_of_keys & set, const key_t & key)->bool
-				{
-					return set.find(key) != set.end();
-				};
-
-				if (is_key_set_mode)
-				{
-					if (!key_set_has_value)
-					{
-						key_set_has_value	= true;
-						memcpy(&key_set, &key, sizeof(key_t));
-
-						// is_key_set_mode = false;
-					}
-
-
+					keys_down.erase(it++);
 				}
 				else 
 				{
-					if (is_down && !does_set_contain_key(keys_down, key))
-					{
-						keys_pressed.insert(key);
-					}
-					else 
-					{
-						// keys_pressed.erase(key);
-					}
-
-
-					if (is_down)
-					{
-						// printf("inserting: %s\n", buffer);
-						keys_down.insert(key);
-					}
-					else 
-					{
-						keys_down.erase(key);
-					}
+					++it;
 				}
+			}
+		}
+
+		return;
+	}
+	else 
+	{
+		// todo this makes some of the handling below obsolete...
+		if (!is_down)
+		{
+			for (auto it = keys_down.begin(); it != keys_down.end(); )
+			{
+
+				bool			should_delete = (it->v_code == kb.VKey) && (it->scan_code == kb.MakeCode);
+
+				if (should_delete)
+				{
+					keys_down.erase(it++);
+				}
+				else 
+				{
+					++it;
+				}
+			}
+		}
+	}
+
+	wchar_t 		key_fmt_buffer[64];
+
+	key_fmt_buffer[0]	= 0;
+
+	if (any_ctrl)
+		wcscat(key_fmt_buffer, L"CTRL+");
+
+	if (alt)
+		wcscat(key_fmt_buffer, L"ALT+");
+
+	if (shift)
+		wcscat(key_fmt_buffer, L"SHIFT+");
+
+	wcscat(key_fmt_buffer, utf16_buffer);
+	CharUpperW(key_fmt_buffer);
+
+	// printf("%ls\n", key_fmt_buffer);
+	char			utf8_buffer[128];
+
+	_codeduplicationftw_util_wide_to_utf8(key_fmt_buffer, wcslen(key_fmt_buffer), utf8_buffer, 
+		sizeof(utf8_buffer));
+
+	// printf("%s: %s\n", (is_down ? "D" : "U"), utf8_buffer);
+	// typedef struct {
+	//	uint32_t v_code    PACKED;
+	//	uint32_t scan_code PACKED;
+	//	str31	 desc_utf8 PACKED;
+	//	bool	 ctrl	   PACKED;
+	//	bool	 alt	   PACKED;
+	//	bool	 shift	   PACKED;
+	// } PACKED key_t;
+	key_t			key;
+
+	memset(&key, 0, sizeof(key));
+	key.v_code			= kb.VKey;
+	key.scan_code		= kb.MakeCode;
+	strncpy(key.desc_utf8, utf8_buffer, 31);
+	key.ctrl			= any_ctrl;
+	key.alt 			= alt;
+	key.shift			= shift;
+
+
+	//printf("%d %s\n", key.v_code, key.desc_utf8);
+	{
+		std::lock_guard < std::mutex > lock(keys_lock);
+
+		auto			does_set_contain_key =[] (const set_of_keys & set, const key_t & key)->bool
+		{
+			return set.find(key) != set.end();
+		};
+
+		if (is_key_set_mode)
+		{
+			if (!key_set_has_value)
+			{
+				key_set_has_value	= true;
+				memcpy(&key_set, &key, sizeof(key_t));
+
+				// is_key_set_mode = false;
 			}
 
 
-
-			keys_cv.notify_all();
-
-			// next:;
 		}
+		else 
+		{
+			if (is_down && !does_set_contain_key(keys_down, key))
+			{
+				keys_pressed.insert(key);
+			}
+			else 
+			{
+				// keys_pressed.erase(key);
+			}
 
 
+			if (is_down)
+			{
+				// printf("inserting: %s\n", buffer);
+				keys_down.insert(key);
+			}
+			else 
+			{
+				keys_down.erase(key);
+			}
+		}
 	}
-	/*else 
-	{
-		// printf("type: %u\n", raw->header.dwType);
-		// printf("unknown\n");
-	}*/
 
+	keys_cv.notify_all();
 
-
+	// next:;
 }
 
 
@@ -769,7 +820,7 @@ bool gui_impl_init(const char * title)
 
 #else
 
-	RAWINPUTDEVICE	rid[2];
+	RAWINPUTDEVICE	rid[3];
 
 	rid[0].usUsagePage	= 0x01;
 	rid[0].usUsage		= 0x05;
@@ -781,7 +832,12 @@ bool gui_impl_init(const char * title)
 	rid[1].dwFlags		= RIDEV_INPUTSINK;
 	rid[1].hwndTarget	= hwnd;
 
-	if (!RegisterRawInputDevices(rid, 2, sizeof(rid[0])))
+	rid[2].usUsagePage	= 0x01;
+	rid[2].usUsage		= 0x06;
+	rid[2].dwFlags		= RIDEV_INPUTSINK;			//RIDEV_NOLEGACY;
+	rid[2].hwndTarget	= hwnd;
+
+	if (!RegisterRawInputDevices(rid, 3, sizeof(rid[0])))
 	{
 		MessageBoxA(tbe->hWnd, "raw input reg failed!", "Error", MB_OK);
 		abort();
@@ -870,8 +926,8 @@ void gui_impl_end_frame()
 	g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, false);
 	g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
 	g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, false);
-	D3DCOLOR		clear_col_dx = D3DCOLOR_RGBA((int) (clear_color.x * 255.0f), (int) (clear_color.y * 255.0f),
-		 (int) (clear_color.z * 255.0f), (int) (clear_color.w * 255.0f));
+	D3DCOLOR		clear_col_dx = D3DCOLOR_RGBA((int) (clear_color.x * 255.0f), (int) (clear_color.y * 255.0f), 
+		(int) (clear_color.z * 255.0f), (int) (clear_color.w * 255.0f));
 
 	g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
 
@@ -889,7 +945,7 @@ void gui_impl_end_frame()
 		ResetDevice();
 
 
-	std::lock_guard <std::mutex> lock(keys_lock);
+	std::lock_guard < std::mutex > lock(keys_lock);
 
 	if (keys_down.size() > 0)
 	{
