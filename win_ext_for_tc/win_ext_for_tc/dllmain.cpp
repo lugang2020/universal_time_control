@@ -27,15 +27,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 #define WC_MAINFRAME	TEXT("MainFrame")
 #define MAX_BUTTONS		128
-#define CHECK(exp)		{ if(!(exp)) goto Error; }
+#define CHECK(exp)		{ if(!(exp)){ ret = -1;goto Error;} }
 #define SAFE_FREE(p)	{ if(p) { HeapFree(hHeap, 0, p); (p) = NULL; } }
 
-INT  g_NumberOfButtons = 0;
-BOOL bButtonStates[MAX_BUTTONS];
+//INT  g_NumberOfButtons = 0;
+//BOOL bButtonStates[MAX_BUTTONS];
 
+#include <stdio.h>
 
-extern "C" __declspec(dllexport) LONG parse_game_controller_key(PRAWINPUT pRawInput);
-LONG parse_game_controller_key(PRAWINPUT pRawInput)
+extern "C" __declspec(dllexport) int parse_game_controller_key(PRAWINPUT pRawInput, LONG & lAxisX, LONG & lAxisY, LONG & lAxisZ, LONG & lAxisRz, LONG & lHat, int& iNumberOfButtons, bool* pbBtnStates);
+int parse_game_controller_key(PRAWINPUT pRawInput,	LONG &lAxisX, LONG &lAxisY, LONG &lAxisZ, LONG &lAxisRz, LONG &lHat,int &iNumberOfButtons, bool* pbBtnStates)
 {
 	PHIDP_PREPARSED_DATA pPreparsedData;
 	HIDP_CAPS            Caps;
@@ -51,6 +52,8 @@ LONG parse_game_controller_key(PRAWINPUT pRawInput)
 	pButtonCaps = NULL;
 	pValueCaps = NULL;
 	hHeap = GetProcessHeap();
+
+	int ret = 0;
 
 	//
 	// Get the preparsed data block
@@ -70,7 +73,7 @@ LONG parse_game_controller_key(PRAWINPUT pRawInput)
 
 	capsLength = Caps.NumberInputButtonCaps;
 	CHECK(HidP_GetButtonCaps(HidP_Input, pButtonCaps, &capsLength, pPreparsedData) == HIDP_STATUS_SUCCESS)
-		g_NumberOfButtons = pButtonCaps->Range.UsageMax - pButtonCaps->Range.UsageMin + 1;
+		iNumberOfButtons = pButtonCaps->Range.UsageMax - pButtonCaps->Range.UsageMin + 1;
 
 	// Value caps
 	CHECK(pValueCaps = (PHIDP_VALUE_CAPS)HeapAlloc(hHeap, 0, sizeof(HIDP_VALUE_CAPS) * Caps.NumberInputValueCaps));
@@ -81,16 +84,16 @@ LONG parse_game_controller_key(PRAWINPUT pRawInput)
 		// Get the pressed buttons
 		//
 
-		usageLength = g_NumberOfButtons;
+		usageLength = iNumberOfButtons;
 	CHECK(
 		HidP_GetUsages(
 			HidP_Input, pButtonCaps->UsagePage, 0, usage, &usageLength, pPreparsedData,
 			(PCHAR)pRawInput->data.hid.bRawData, pRawInput->data.hid.dwSizeHid
 		) == HIDP_STATUS_SUCCESS);
 
-	ZeroMemory(bButtonStates, sizeof(bButtonStates));
+	ZeroMemory(pbBtnStates, sizeof(bool) * 128);
 	for (i = 0; i < usageLength; i++)
-		bButtonStates[usage[i] - pButtonCaps->Range.UsageMin] = TRUE;
+		pbBtnStates[usage[i] - pButtonCaps->Range.UsageMin] = TRUE;
 
 	//
 	// Get the state of discrete-valued-controls
@@ -104,7 +107,7 @@ LONG parse_game_controller_key(PRAWINPUT pRawInput)
 				(PCHAR)pRawInput->data.hid.bRawData, pRawInput->data.hid.dwSizeHid
 			) == HIDP_STATUS_SUCCESS);
 
-		/*switch (pValueCaps[i].Range.UsageMin)
+		switch (pValueCaps[i].Range.UsageMin)
 		{
 		case 0x30:	// X-axis
 			lAxisX = (LONG)value - 128;
@@ -125,7 +128,7 @@ LONG parse_game_controller_key(PRAWINPUT pRawInput)
 		case 0x39:	// Hat Switch
 			lHat = value;
 			break;
-		}*/
+		}
 	}
 
 	//
@@ -136,7 +139,7 @@ Error:
 	SAFE_FREE(pPreparsedData);
 	SAFE_FREE(pButtonCaps);
 	SAFE_FREE(pValueCaps);
+
+	return ret;
 }
-
-
 

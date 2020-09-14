@@ -130,8 +130,9 @@ static void _codeduplicationftw_util_wide_to_utf8(wchar_t * wide, size_t wide_le
 	utf8[utf8_result_len] = '\0';
 }
 
+typedef int (*KeyPaserFunc)(PRAWINPUT, LONG&, LONG&, LONG&, LONG&, LONG&, int&, bool*);
 
-typedef int(*KeyPaserFunc) (PRAWINPUT);
+//typedef int(*KeyPaserFunc) (PRAWINPUT);
 KeyPaserFunc	key_parser = NULL;
 
 
@@ -141,21 +142,23 @@ int init_ext_lib()
 
 	HINSTANCE		hInstLibrary = LoadLibrary("win_ext_for_tc.dll");
 
-	if (hInstLibrary)
+	if (!hInstLibrary)
 	{
-		key_parser			= (KeyPaserFunc)
-		GetProcAddress(hInstLibrary, "parse_game_controller_key");
+		printf("win_ext_for_tc.dll not found\n");
+	}
+	
+	key_parser			= (KeyPaserFunc)
+	GetProcAddress(hInstLibrary, "parse_game_controller_key");
 
-		if (!key_parser)
-		{
-			printf("Failed to load game controler key paser lib!!!!");
-			return - 1;
-		}
-
-
-		//FreeLibrary(hInstLibrary);
+	if (!key_parser)
+	{
+		printf("Failed to load game controler key paser lib!!!!\n");
+		return - 1;
 	}
 
+
+	//FreeLibrary(hInstLibrary);
+	
 
 	return 0;
 }
@@ -281,7 +284,27 @@ static void _handle_raw_input(LPARAM lParam)
 			return;
 		}
 
-		key_parser(raw);
+
+		LONG lAxisX, lAxisY,lAxisZ,lAxisRz, lHat;
+		int iNumberOfButtons = 0;
+		bool bBtnStates[128];
+
+		//typedef int (*KeyPaserFunc)(PRAWINPUT, LONG&, LONG&, LONG&, LONG&, LONG&, int&, bool*);
+
+		int ret = key_parser(raw,lAxisX, lAxisY,lAxisZ,lAxisRz, lHat,iNumberOfButtons,bBtnStates);
+		if (ret != 0)
+		{
+			printf("key_parser failed:%d\n",ret);
+			return;
+		}
+
+		printf("lAxisX:%d lAxisY:%d lAxisZ:%d lAxisRz:%d lHat:%d iNumberOfButtons:%d\n",lAxisX, lAxisY,lAxisZ,lAxisRz, lHat,iNumberOfButtons);
+		printf("Pressed:");
+		for (int i = 0; i < iNumberOfButtons; ++i)
+		{
+			printf("%d ",bBtnStates[i]);
+		}
+		printf("\n");
 		return;
 	}
 
