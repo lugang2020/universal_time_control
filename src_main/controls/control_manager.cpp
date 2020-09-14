@@ -317,7 +317,7 @@ void control_manager_thread(control_manager_t * ct)
 			//activate the control meet the requirement
 			for (const auto & key_pressed: keys_pressed)
 			{
-				// printf("%s, ", key_pressed.desc_utf8);
+				//LOGI("%s, %d", key_pressed.desc_utf8,key_pressed.v_code);
 				auto matching_toggle_controls = find_controls_matching_key(ct, key_pressed, CTRL_ACTIVATION_MODE_TOGGLE);
 				auto matching_press_controls = find_controls_matching_key(ct, key_pressed, 	CTRL_ACTIVATION_MODE_PRESS);
 
