@@ -299,12 +299,41 @@ static void _handle_raw_input(LPARAM lParam)
 		}
 
 		printf("lAxisX:%d lAxisY:%d lAxisZ:%d lAxisRz:%d lHat:%d iNumberOfButtons:%d\n",lAxisX, lAxisY,lAxisZ,lAxisRz, lHat,iNumberOfButtons);
-		printf("Pressed:");
+		//printf("Pressed:");
+		int pressed = 0;
 		for (int i = 0; i < iNumberOfButtons; ++i)
 		{
-			printf("%d ",bBtnStates[i]);
+			//printf("%d ",bBtnStates[i]);
+			pressed = i;
+			
 		}
-		printf("\n");
+
+		
+		//printf("\n");
+
+
+		/* output of my xbox game controller Y/X/B/A button
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 0 0 1 0 0 0 0 0 0
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 0 0 0 0 0 0 0 0 0
+		
+		
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 0 1 0 0 0 0 0 0 0
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 0 0 0 0 0 0 0 0 0
+		
+		
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 1 0 0 0 0 0 0 0 0
+		lAxisX:33643 lAxisY:31246 lAxisZ:32640 lAxisRz:1836687558 lHat:0 iNumberOfButtons:10
+		Pressed:0 0 0 0 0 0 0 0 0 0
+		*/
+
+		
+
+		
 		return;
 	}
 
