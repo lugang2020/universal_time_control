@@ -299,8 +299,7 @@ static void _handle_raw_input(LPARAM lParam)
 			return;
 		}
 
-		printf("lAxisX:%ld lAxisY:%ld lAxisZ:%ld lAxisRz:%ld lHat:%ld iNumberOfButtons:%d\n", lAxisX, lAxisY, lAxisZ,
-			 lAxisRz, lHat, iNumberOfButtons);
+		//printf("lAxisX:%ld lAxisY:%ld lAxisZ:%ld lAxisRz:%ld lHat:%ld iNumberOfButtons:%d\n", lAxisX, lAxisY, lAxisZ, lAxisRz, lHat, iNumberOfButtons);
 
 		printf("Pressed:");
 		int 			pressed = 0;
@@ -311,6 +310,7 @@ static void _handle_raw_input(LPARAM lParam)
 			if (bBtnStates[i])
 			{
 				pressed 			= i + 1;
+				break;//only support one button
 			}
 
 		}
@@ -319,7 +319,7 @@ static void _handle_raw_input(LPARAM lParam)
 		if (!pressed)
 		{
 			//discard non button events
-			return;
+			//return;
 		}
 
 
@@ -378,18 +378,30 @@ static void _handle_raw_input(LPARAM lParam)
 			}
 			else 
 			{
-				if (!does_set_contain_key(keys_down, key))
+			//printf("2\n");
+				if (pressed && !does_set_contain_key(keys_down, key))
 				{
 					keys_pressed.insert(key);
-					Sleep(50);
+				}
+				else 
+				{
 					keys_pressed.erase(key);
+				}
+
+
+				if (pressed)
+				{
+					// printf("inserting: %s\n", buffer);
 					keys_down.insert(key);
-					Sleep(50);
+				}
+				else 
+				{
 					keys_down.erase(key);
 				}
 
 			}
 		}
+
 
 		keys_cv.notify_all();
 
