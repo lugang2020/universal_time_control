@@ -61,6 +61,24 @@ void ParseRawInput(PRAWINPUT pRawInput)
 	CHECK( pPreparsedData = (PHIDP_PREPARSED_DATA)HeapAlloc(hHeap, 0, bufferSize) );
 	CHECK( (int)GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_PREPARSEDDATA, pPreparsedData, &bufferSize) >= 0 );
 
+
+	RID_DEVICE_INFO deviceInfo;
+	deviceInfo.cbSize = sizeof(RID_DEVICE_INFO);
+
+	bufferSize = sizeof(RID_DEVICE_INFO);
+	CHECK(GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_DEVICEINFO, &deviceInfo, &bufferSize) > 0);
+	if (deviceInfo.dwType == RIM_TYPEHID)
+	{
+		DWORD dwV = deviceInfo.hid.dwVendorId;
+		DWORD dwP = deviceInfo.hid.dwProductId;
+		int abc = 0;
+	}
+
+	
+	DWORD err = GetLastError();
+	//CHECK(pPreparsedData = (PHIDP_PREPARSED_DATA)HeapAlloc(hHeap, 0, bufferSize));
+	//CHECK((int)GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_PREPARSEDDATA, pPreparsedData, &bufferSize) >= 0);
+
 	//
 	// Get the joystick's capabilities
 	//
