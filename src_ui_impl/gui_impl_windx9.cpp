@@ -301,13 +301,13 @@ static void _handle_raw_input(LPARAM lParam)
 
 		printf("lAxisX:%ld lAxisY:%ld lAxisZ:%ld lAxisRz:%ld lHat:%ld iNumberOfButtons:%d\n", lAxisX, lAxisY, lAxisZ, lAxisRz, lHat, iNumberOfButtons);
 
-		printf("Pressed:");
+		//printf("Pressed:");
 		int 			pressed = 0;
 		static int last_key_pressed = 0;
 
 		for (int i = 0; i < iNumberOfButtons; ++i)
 		{
-			printf("%d ",bBtnStates[i]);
+			//printf("%d ",bBtnStates[i]);
 			if (bBtnStates[i])
 			{
 				pressed 			= i + 1;
@@ -315,16 +315,27 @@ static void _handle_raw_input(LPARAM lParam)
 			}
 
 		}
-		printf("\n");
+		//printf("\n");
 
-		if (!pressed && !last_key_pressed)
+		char *key_des = "GamePad";
+
+		if (!pressed && !last_key_pressed && !lHat)
 		{
 			//discard non button events
 			return;
 		}
 
-		//if (pressed)
-		
+		if ( (lHat && !pressed) )
+		{
+			pressed = iNumberOfButtons + (lHat + 1)/2;
+			key_des = "Hat";
+		}
+
+		if (!lHat && last_key_pressed > iNumberOfButtons)
+		{
+			pressed = 0;
+			key_des = "Hat";
+		}
 
 
 		//printf("\n");
@@ -350,7 +361,7 @@ static void _handle_raw_input(LPARAM lParam)
 		key_t			key;
 
 		memset(&key, 0, sizeof(key));
-		key.v_code	= '0';
+		key.v_code	= 0;//'0';
 		if (!pressed)
 		{
 			key.v_code += last_key_pressed;
@@ -363,9 +374,10 @@ static void _handle_raw_input(LPARAM lParam)
 		last_key_pressed = pressed;
 		
 		//key.scan_code		= kb.MakeCode;
-		sprintf(key.desc_utf8,"%c", key.v_code);
+		int btn_idx = (key.v_code > iNumberOfButtons) ? (key.v_code - iNumberOfButtons) :  key.v_code;
+		sprintf(key.desc_utf8,"%s %d", key_des,btn_idx);
 
-		printf("Gamepad button pressed detected:%d %s %d %d\n", key.v_code, key.desc_utf8,pressed,last_key_pressed);
+		printf("Gamepad button pressed detected:%d %s %d %d\n", key.v_code, "",pressed,last_key_pressed);
 
 		/*key.ctrl			= any_ctrl;
 		key.alt 			= alt;
