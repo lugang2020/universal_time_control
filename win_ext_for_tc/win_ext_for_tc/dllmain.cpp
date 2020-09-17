@@ -60,86 +60,135 @@ int parse_game_controller_key(PRAWINPUT pRawInput,	LONG &lAxisX, LONG &lAxisY, L
 	//
 
 	CHECK(GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_PREPARSEDDATA, NULL, &bufferSize) == 0);
-	CHECK(pPreparsedData = (PHIDP_PREPARSED_DATA)HeapAlloc(hHeap, 0, bufferSize));
-	CHECK((int)GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_PREPARSEDDATA, pPreparsedData, &bufferSize) >= 0);
+CHECK(pPreparsedData = (PHIDP_PREPARSED_DATA)HeapAlloc(hHeap, 0, bufferSize));
+CHECK((int)GetRawInputDeviceInfo(pRawInput->header.hDevice, RIDI_PREPARSEDDATA, pPreparsedData, &bufferSize) >= 0);
 
-	//
-	// Get the joystick's capabilities
-	//
+//
+// Get the joystick's capabilities
+//
 
-	// Button caps
-	CHECK(HidP_GetCaps(pPreparsedData, &Caps) == HIDP_STATUS_SUCCESS)
-		CHECK(pButtonCaps = (PHIDP_BUTTON_CAPS)HeapAlloc(hHeap, 0, sizeof(HIDP_BUTTON_CAPS) * Caps.NumberInputButtonCaps));
+// Button caps
+CHECK(HidP_GetCaps(pPreparsedData, &Caps) == HIDP_STATUS_SUCCESS)
+CHECK(pButtonCaps = (PHIDP_BUTTON_CAPS)HeapAlloc(hHeap, 0, sizeof(HIDP_BUTTON_CAPS) * Caps.NumberInputButtonCaps));
 
-	capsLength = Caps.NumberInputButtonCaps;
-	CHECK(HidP_GetButtonCaps(HidP_Input, pButtonCaps, &capsLength, pPreparsedData) == HIDP_STATUS_SUCCESS)
-		iNumberOfButtons = pButtonCaps->Range.UsageMax - pButtonCaps->Range.UsageMin + 1;
+capsLength = Caps.NumberInputButtonCaps;
+CHECK(HidP_GetButtonCaps(HidP_Input, pButtonCaps, &capsLength, pPreparsedData) == HIDP_STATUS_SUCCESS)
+iNumberOfButtons = pButtonCaps->Range.UsageMax - pButtonCaps->Range.UsageMin + 1;
 
-	// Value caps
-	CHECK(pValueCaps = (PHIDP_VALUE_CAPS)HeapAlloc(hHeap, 0, sizeof(HIDP_VALUE_CAPS) * Caps.NumberInputValueCaps));
-	capsLength = Caps.NumberInputValueCaps;
-	CHECK(HidP_GetValueCaps(HidP_Input, pValueCaps, &capsLength, pPreparsedData) == HIDP_STATUS_SUCCESS)
+// Value caps
+CHECK(pValueCaps = (PHIDP_VALUE_CAPS)HeapAlloc(hHeap, 0, sizeof(HIDP_VALUE_CAPS) * Caps.NumberInputValueCaps));
+capsLength = Caps.NumberInputValueCaps;
+CHECK(HidP_GetValueCaps(HidP_Input, pValueCaps, &capsLength, pPreparsedData) == HIDP_STATUS_SUCCESS)
 
-		//
-		// Get the pressed buttons
-		//
+//
+// Get the pressed buttons
+//
 
-		usageLength = iNumberOfButtons;
+usageLength = iNumberOfButtons;
+CHECK(
+	HidP_GetUsages(
+		HidP_Input, pButtonCaps->UsagePage, 0, usage, &usageLength, pPreparsedData,
+		(PCHAR)pRawInput->data.hid.bRawData, pRawInput->data.hid.dwSizeHid
+	) == HIDP_STATUS_SUCCESS);
+
+ZeroMemory(pbBtnStates, sizeof(bool) * 128);
+for (i = 0; i < usageLength; i++)
+	pbBtnStates[usage[i] - pButtonCaps->Range.UsageMin] = TRUE;
+
+//
+// Get the state of discrete-valued-controls
+//
+
+for (i = 0; i < Caps.NumberInputValueCaps; i++)
+{
 	CHECK(
-		HidP_GetUsages(
-			HidP_Input, pButtonCaps->UsagePage, 0, usage, &usageLength, pPreparsedData,
+		HidP_GetUsageValue(
+			HidP_Input, pValueCaps[i].UsagePage, 0, pValueCaps[i].Range.UsageMin, &value, pPreparsedData,
 			(PCHAR)pRawInput->data.hid.bRawData, pRawInput->data.hid.dwSizeHid
 		) == HIDP_STATUS_SUCCESS);
 
-	ZeroMemory(pbBtnStates, sizeof(bool) * 128);
-	for (i = 0; i < usageLength; i++)
-		pbBtnStates[usage[i] - pButtonCaps->Range.UsageMin] = TRUE;
-
-	//
-	// Get the state of discrete-valued-controls
-	//
-
-	for (i = 0; i < Caps.NumberInputValueCaps; i++)
+	switch (pValueCaps[i].Range.UsageMin)
 	{
-		CHECK(
-			HidP_GetUsageValue(
-				HidP_Input, pValueCaps[i].UsagePage, 0, pValueCaps[i].Range.UsageMin, &value, pPreparsedData,
-				(PCHAR)pRawInput->data.hid.bRawData, pRawInput->data.hid.dwSizeHid
-			) == HIDP_STATUS_SUCCESS);
+	case 0x30:	// X-axis
+		lAxisX = (LONG)value - 128;
+		break;
 
-		switch (pValueCaps[i].Range.UsageMin)
-		{
-		case 0x30:	// X-axis
-			lAxisX = (LONG)value - 128;
-			break;
+	case 0x31:	// Y-axis
+		lAxisY = (LONG)value - 128;
+		break;
 
-		case 0x31:	// Y-axis
-			lAxisY = (LONG)value - 128;
-			break;
+	case 0x32: // Z-axis
+		lAxisZ = (LONG)value - 128;
+		break;
 
-		case 0x32: // Z-axis
-			lAxisZ = (LONG)value - 128;
-			break;
+	case 0x35: // Rotate-Z
+		lAxisRz = (LONG)value - 128;
+		break;
 
-		case 0x35: // Rotate-Z
-			lAxisRz = (LONG)value - 128;
-			break;
-
-		case 0x39:	// Hat Switch
-			lHat = value;
-			break;
-		}
+	case 0x39:	// Hat Switch
+		lHat = value;
+		break;
 	}
-
-	//
-	// Clean up
-	//
-
-Error:
-	SAFE_FREE(pPreparsedData);
-	SAFE_FREE(pButtonCaps);
-	SAFE_FREE(pValueCaps);
-
-	return ret;
 }
 
+//
+// Clean up
+//
+
+Error:
+SAFE_FREE(pPreparsedData);
+SAFE_FREE(pButtonCaps);
+SAFE_FREE(pValueCaps);
+
+return ret;
+}
+
+
+void play(char* path);
+
+DWORD CALLBACK play_thread(void* p)
+{
+	char* path = (char*)p;
+	play(path);
+
+	return 0;
+}
+
+char mp3_path[255];
+HANDLE hPlayThread = 0;
+
+extern "C" __declspec(dllexport) void play_sound(int start);
+
+void play_sound(int speedup)
+{
+#pragma warning (disable : 4996)
+	if (hPlayThread != 0)
+	{
+		DWORD dwRet = WaitForSingleObject(hPlayThread, 0);
+		if (dwRet == WAIT_ABANDONED )
+		{
+			return;
+		}
+
+	}
+
+	char cur_dir[255];
+	GetModuleFileNameA(NULL, cur_dir, MAX_PATH);
+	char* last_slash = strrchr(cur_dir, '\\');
+	*(++last_slash) = 0;
+
+	
+	if (speedup)
+	{
+		sprintf(mp3_path, "%s\\%s", cur_dir, "Entering.mp3");
+	}
+	else
+	{
+		sprintf(mp3_path, "%s\\%s", cur_dir, "Exiting.mp3");
+	}
+
+	hPlayThread = CreateThread(NULL, 0, play_thread, mp3_path, 0, NULL);
+
+	
+
+}

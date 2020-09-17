@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="get_game_path.cpp" />
-    <ClCompile Include="mp3_player.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01A50624-A4B7-47DC-84B2-9C1B06161716}</ProjectGuid>

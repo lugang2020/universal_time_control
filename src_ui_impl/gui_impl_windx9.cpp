@@ -131,10 +131,23 @@ static void _codeduplicationftw_util_wide_to_utf8(wchar_t * wide, size_t wide_le
 }
 
 
-typedef int(*KeyPaserFunc) (PRAWINPUT, LONG &, LONG &, LONG &, LONG &, LONG &, int &, bool *);
+typedef int(*key_parse_func) (PRAWINPUT, LONG &, LONG &, LONG &, LONG &, LONG &, int &, bool *);
 
-//typedef int(*KeyPaserFunc) (PRAWINPUT);
-KeyPaserFunc	key_parser = NULL;
+typedef void (*play_sound_func)(int);
+
+key_parse_func	key_parser = NULL;
+play_sound_func play_sound = NULL;
+
+
+extern "C" __declspec(dllexport) void play_mp3(int speedup);
+
+void play_mp3(int speedup)
+{
+	if (play_sound)
+	{
+		play_sound(speedup);
+	}
+}
 
 
 int init_ext_lib()
@@ -148,12 +161,17 @@ int init_ext_lib()
 		printf("win_ext_for_tc.dll not found\n");
 	}
 
-	key_parser			= (KeyPaserFunc)
-	GetProcAddress(hInstLibrary, "parse_game_controller_key");
-
+	key_parser			= (key_parse_func)GetProcAddress(hInstLibrary, "parse_game_controller_key");
 	if (!key_parser)
 	{
 		printf("Failed to load game controler key paser lib!!!!\n");
+		return - 1;
+	}
+
+	play_sound			= (play_sound_func)GetProcAddress(hInstLibrary, "play_sound");
+	if (!play_sound)
+	{
+		printf("Failed to load playsound lib!!!!\n");
 		return - 1;
 	}
 
@@ -317,7 +335,7 @@ static void _handle_raw_input(LPARAM lParam)
 		}
 		//printf("\n");
 
-		char *key_des = "GamePad";
+		char *key_des = (char*)"GamePad";
 
 		if (!pressed && !last_key_pressed && !lHat)
 		{
@@ -328,13 +346,13 @@ static void _handle_raw_input(LPARAM lParam)
 		if ( (lHat && !pressed) )
 		{
 			pressed = iNumberOfButtons + (lHat + 1)/2;
-			key_des = "Hat";
+			key_des = (char*)"Hat";
 		}
 
 		if (!lHat && last_key_pressed > iNumberOfButtons)
 		{
 			pressed = 0;
-			key_des = "Hat";
+			key_des = (char*)"Hat";
 		}
 
 

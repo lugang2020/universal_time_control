@@ -651,7 +651,7 @@ static float _get_timescale_for_control(control_manager_t * c, const control_t *
 }
 
 
-
+#if 0
 void StartProcess2( LPCWSTR exe_path,LPCWSTR args)
 {
 	
@@ -717,9 +717,10 @@ bool play_sound(int speedup)
 
 }
 
+#endif
 
 
-
+extern "C" __declspec(dllexport) void play_mp3(int speedup);;
 
 
 
@@ -746,7 +747,7 @@ float control_manager_calculate_timescale(control_manager_t * ct)
 	if ( (timescale != o_timescale) && g_sound_effect)
 	{
 		o_timescale = timescale;
-		play_sound(speedup);
+		play_mp3(speedup);
 		if (speedup)
 		{
 			LOGI("speed up");

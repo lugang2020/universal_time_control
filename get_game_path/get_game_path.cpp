@@ -328,53 +328,6 @@ void play(char* path);
 // Application entry point
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
-	LPWSTR* szArgList;
-	int argCount;
-
-	szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
-	if (szArgList == NULL)
-	{
-		//MessageBox(NULL, L"Unable to parse command line", L"Error", MB_OK);
-		return 10;
-	}
-
-	char cur_dir[255];
-	GetModuleFileName(NULL, cur_dir, MAX_PATH);
-	char* last_slash = strrchr(cur_dir, '\\');
-	*(++last_slash) = 0;
-
-	if (argCount > 1)
-	{
-		HANDLE hMutexHandle = CreateMutexW(NULL, TRUE, L"get_game_path.is_running");
-		if (GetLastError() == ERROR_ALREADY_EXISTS)
-		{
-			//logMessage("UTC is already running. (Check your system tray!)");
-			return 1;
-		}
-
-		LPWSTR op = szArgList[1];
-		char mp3_path[255];
-
-		if (StrStrW(op, L"start"))
-		{
-			sprintf(mp3_path, "%s\\%s", cur_dir, "Entering.mp3");
-			//logMessage(mp3_path);
-			play(mp3_path);
-
-		}
-		else
-		{
-			sprintf(mp3_path, "%s\\%s", cur_dir, "Exiting.mp3");
-			//logMessage(mp3_path);
-			play(mp3_path);
-		}
-
-		LocalFree(szArgList);
-		ReleaseMutex(hMutexHandle);
-
-		return 0;
-	}
-
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr))
 	{
