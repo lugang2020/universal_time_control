@@ -5,22 +5,23 @@
 //#include <AFXCOM_.H>
 
 
+extern void logMessage(const char* fmt, ...);
+
 #pragma comment(lib,"winmm.lib")
-void play(char *path)
+void play(wchar_t *path)
 {
 
-    //char str[128] = { 0 };
-    //int i = 0;
+    logMessage("play thread:%s\n",path);
     char buf[128] = { 0 };
-    MCI_OPEN_PARMSA mciOpen;
+    MCI_OPEN_PARMS mciOpen;
     MCIERROR mciError;
-    mciOpen.lpstrDeviceType = "mpegvideo";
+    mciOpen.lpstrDeviceType = L"mpegvideo";
     mciOpen.lpstrElementName = path;
     mciError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT, (DWORD)&mciOpen);
     if (mciError)
     {
         mciGetErrorStringA(mciError, buf, 128);
-        printf("%s/n", buf);
+        logMessage("%s", buf);
         return;
     }
     UINT DeviceID = mciOpen.wDeviceID;
@@ -28,7 +29,7 @@ void play(char *path)
     mciError = mciSendCommand(DeviceID, MCI_PLAY, 0, (DWORD)&mciPlay);
     if (mciError)
     {
-        printf("send MCI_PLAY command failed/n");
+        logMessage("send MCI_PLAY command failed/n");
         return;
     }
     //WinExec("sndvol32.exe",SW_SHOWNORMAL);

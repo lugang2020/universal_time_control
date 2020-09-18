@@ -144,24 +144,61 @@ return ret;
 }
 
 
-void play(char* path);
+#pragma warning (disable : 4996)
+
+void logMessage(const char* fmt, ...)
+{
+
+
+	va_list argptr;
+	char msg[1024];
+	va_start(argptr, fmt);
+	vsprintf_s(msg, 1024, fmt, argptr);
+	va_end(argptr);
+
+	char* logPath = (char*)"vcam.log";
+
+	static FILE* logf = NULL;
+
+	if (logf != NULL)
+	{
+		fprintf(logf, "%s\n", msg);
+		fflush(logf);
+	}
+	else
+	{
+		logf = fopen(logPath, "a");
+	}
+
+	//fclose(pFile);
+
+}
+
+
+
+void play(wchar_t* path);
 
 DWORD CALLBACK play_thread(void* p)
 {
-	char* path = (char*)p;
+
+	wchar_t* path = (wchar_t*)p;
+	logMessage("path %s",path);
 	play(path);
 
 	return 0;
 }
 
-char mp3_path[255];
+TCHAR mp3_path[MAX_PATH];
 HANDLE hPlayThread = 0;
 
 extern "C" __declspec(dllexport) void play_sound(int start);
 
+
+
 void play_sound(int speedup)
 {
-#pragma warning (disable : 4996)
+	logMessage("play_sound:%d\n",speedup);
+
 	if (hPlayThread != 0)
 	{
 		DWORD dwRet = WaitForSingleObject(hPlayThread, 0);
@@ -172,19 +209,20 @@ void play_sound(int speedup)
 
 	}
 
-	char cur_dir[255];
-	GetModuleFileNameA(NULL, cur_dir, MAX_PATH);
-	char* last_slash = strrchr(cur_dir, '\\');
+	TCHAR cur_dir[MAX_PATH];
+	GetModuleFileName(NULL, cur_dir, MAX_PATH);
+	TCHAR* last_slash = _tcsrchr(cur_dir, _T('\\'));
 	*(++last_slash) = 0;
 
-	
+	logMessage("play_sound:%s\n", cur_dir);
+
 	if (speedup)
 	{
-		sprintf(mp3_path, "%s\\%s", cur_dir, "Entering.mp3");
+		_stprintf(mp3_path, _T("%s\\data\\%s"), cur_dir, _T("Entering.mp3"));
 	}
 	else
 	{
-		sprintf(mp3_path, "%s\\%s", cur_dir, "Exiting.mp3");
+		_stprintf(mp3_path, _T("%s\\data\\%s"), cur_dir, _T("Exiting.mp3"));
 	}
 
 	hPlayThread = CreateThread(NULL, 0, play_thread, mp3_path, 0, NULL);
