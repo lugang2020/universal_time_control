@@ -738,26 +738,34 @@ float control_manager_calculate_timescale(control_manager_t * ct)
 			continue;
 
 		timescale = _get_timescale_for_control(ct, &control);
-		speedup = control.slow_or_fast;
+		//speedup = control.slow_or_fast;
 	}
 
 	LOGI("timescale: %f\n", timescale);
 
-	
-	if ( (timescale != o_timescale) && g_sound_effect)
+	if (!g_sound_effect || timescale == o_timescale)
 	{
-		o_timescale = timescale;
-		play_mp3(speedup);
-		if (speedup)
-		{
-			LOGI("speed up");
-		}
-		else
-		{
-			LOGI("speed down");
-		}
+		return timescale;
 	}
 
+	
+
+	if (o_timescale < timescale)
+	{
+		speedup = 1;
+	}
+		
+	o_timescale = timescale;
+	play_mp3(speedup);
+	if (speedup)
+	{
+		LOGI("speed up");
+	}
+	else
+	{
+		LOGI("speed down");
+	}
+	
 	return timescale;
 }
 

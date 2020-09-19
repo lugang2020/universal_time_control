@@ -149,7 +149,7 @@ return ret;
 void logMessage(const char* fmt, ...)
 {
 
-
+#if 0
 	va_list argptr;
 	char msg[1024];
 	va_start(argptr, fmt);
@@ -171,7 +171,7 @@ void logMessage(const char* fmt, ...)
 	}
 
 	//fclose(pFile);
-
+#endif
 }
 
 
